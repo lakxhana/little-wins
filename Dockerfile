@@ -9,10 +9,15 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install all dependencies (needed for build)
-RUN npm install
+RUN npm install --legacy-peer-deps && npm install ajv@^8.0.0 --legacy-peer-deps
 
 # Copy application files
 COPY . .
+
+# Build arguments for environment variables
+# Note: React environment variables must be prefixed with REACT_APP_
+ARG REACT_APP_GROQ_API_KEY
+ENV REACT_APP_GROQ_API_KEY=$REACT_APP_GROQ_API_KEY
 
 # Build React app
 RUN npm run build

@@ -2,7 +2,7 @@
   "name": "little-wins",
   "version": "1.0.0",
   "description": "Little Wins React App",
-  "main": "index.js",
+  "main": "index.jsx",
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
@@ -11,11 +11,15 @@
   "dependencies": {
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-router-dom": "^7.10.1",
+    "react-router-dom": "^6.20.0",
     "react-scripts": "5.0.1"
   },
   "devDependencies": {
-    "serve": "^14.2.1"
+    "@types/node": "^18.19.130",
+    "@types/react": "^18.3.27",
+    "@types/react-dom": "^18.3.7",
+    "serve": "^14.2.1",
+    "typescript": "^4.9.5"
   },
   "browserslist": {
     "production": [
