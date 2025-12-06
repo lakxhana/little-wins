@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import Header from '../common/Header';
 import MotivationalQuote from './MotivationalQuote';
+import TaskWarrior from './TaskWarrior';
 import MoodStatus from './MoodStatus';
 import TodoList from './TodoList';
 import FocusTools from './FocusTools';
@@ -11,6 +13,7 @@ import { theme } from '../../styles/theme';
 const Dashboard = ({ taskFeeling, energyLevel, onUpdateTaskFeeling, onUpdateEnergyLevel }) => {
   const [tasks, setTasks] = useState([]);
   const [hasLoaded, setHasLoaded] = useState(false);
+  const [taskStartTimes, setTaskStartTimes] = useState(new Map());
 
   // Load tasks from localStorage on mount
   useEffect(() => {
@@ -66,6 +69,34 @@ const Dashboard = ({ taskFeeling, energyLevel, onUpdateTaskFeeling, onUpdateEner
     }
   }, [tasks, hasLoaded]);
 
+  // Track when tasks become the current task (first incomplete task)
+  useEffect(() => {
+    if (!hasLoaded || tasks.length === 0) return;
+    
+    setTaskStartTimes(prev => {
+      const incompleteTasks = tasks.filter(task => !task.completed);
+      const currentTask = incompleteTasks.length > 0 ? incompleteTasks[0] : null;
+      const newMap = new Map(prev);
+      let hasChanges = false;
+      
+      // Add start time for current task if it doesn't have one
+      if (currentTask && !newMap.has(currentTask.id)) {
+        newMap.set(currentTask.id, Date.now());
+        hasChanges = true;
+      }
+      
+      // Clean up start times for completed tasks
+      tasks.forEach(task => {
+        if (task.completed && newMap.has(task.id)) {
+          newMap.delete(task.id);
+          hasChanges = true;
+        }
+      });
+      
+      return hasChanges ? newMap : prev;
+    });
+  }, [tasks, hasLoaded]);
+
   const handleAddTask = (taskText) => {
     // Support both single task and array of tasks
     const taskTexts = Array.isArray(taskText) ? taskText : [taskText];
@@ -88,9 +119,42 @@ const Dashboard = ({ taskFeeling, energyLevel, onUpdateTaskFeeling, onUpdateEner
   };
 
   const handleToggleTask = (taskId) => {
-    setTasks(tasks.map(task =>
-      task.id === taskId ? { ...task, completed: !task.completed } : task
-    ));
+    setTasks(prevTasks => {
+      const updatedTasks = prevTasks.map(task => {
+        if (task.id === taskId) {
+          const wasCompleted = task.completed;
+          const newCompleted = !task.completed;
+          
+          // If task is being marked as completed (not uncompleted), trigger XP gain
+          if (!wasCompleted && newCompleted) {
+            // Get start time for this task
+            const startTime = taskStartTimes.get(taskId) || null;
+            
+            // Dispatch custom event for TaskWarrior to listen to with task complexity and start time
+            window.dispatchEvent(new CustomEvent('taskCompleted', {
+              detail: { 
+                complexity: task.complexity || 'low',
+                startTime: startTime
+              }
+            }));
+            
+            // Remove start time since task is completed
+            setTaskStartTimes(prev => {
+              const newMap = new Map(prev);
+              newMap.delete(taskId);
+              return newMap;
+            });
+          } else if (wasCompleted && !newCompleted) {
+            // If task is being uncompleted, reset consecutive streak
+            window.dispatchEvent(new CustomEvent('taskUncompleted'));
+          }
+          
+          return { ...task, completed: newCompleted };
+        }
+        return task;
+      });
+      return updatedTasks;
+    });
   };
 
   const handleDeleteTask = (taskId) => {
@@ -194,18 +258,12 @@ const Dashboard = ({ taskFeeling, energyLevel, onUpdateTaskFeeling, onUpdateEner
     padding: theme.spacing.lg,
   };
 
-  const titleStyle = {
-    ...theme.typography.h1,
-    color: theme.colors.primaryBlue,
-    marginBottom: theme.spacing.xl,
-    fontWeight: '600',
-  };
-
   return (
     <div style={containerStyle}>
+      <Header />
       <div style={contentStyle}>
-        <h1 style={titleStyle}>Little Wins</h1>
         <MotivationalQuote />
+        <TaskWarrior />
         <MoodStatus
           taskFeeling={taskFeeling}
           energyLevel={energyLevel}

@@ -54,7 +54,7 @@ const EnergyLevelScreen = ({ onSelect }) => {
   const optionsContainerStyle = {
     display: 'flex',
     flexDirection: 'column',
-    gap: theme.spacing.md,
+    gap: theme.spacing.xs,
     maxWidth: '500px',
     width: '100%',
   };
