@@ -5,7 +5,26 @@ import { theme } from '../../styles/theme';
 
 const MoodStatus = ({ taskFeeling, energyLevel, onUpdateTaskFeeling, onUpdateEnergyLevel }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [dropdownPosition, setDropdownPosition] = useState('right');
   const dropdownRef = useRef(null);
+  const buttonRef = useRef(null);
+
+  // Calculate dropdown position based on available space
+  useEffect(() => {
+    if (isDropdownOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      const dropdownWidth = 300; // minWidth from styles
+      const spaceOnRight = window.innerWidth - rect.right;
+      const spaceOnLeft = rect.left;
+
+      // Position on left if not enough space on right
+      if (spaceOnRight < dropdownWidth && spaceOnLeft > dropdownWidth) {
+        setDropdownPosition('left');
+      } else {
+        setDropdownPosition('right');
+      }
+    }
+  }, [isDropdownOpen]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -83,19 +102,33 @@ const MoodStatus = ({ taskFeeling, energyLevel, onUpdateTaskFeeling, onUpdateEne
     position: 'relative',
   };
 
-  const dropdownStyle = {
-    position: 'absolute',
-    top: 0,
-    left: '100%',
-    marginLeft: theme.spacing.md,
-    background: theme.colors.white,
-    borderRadius: theme.borderRadius.md,
-    boxShadow: theme.shadows.lg,
-    padding: theme.spacing.md,
-    zIndex: 1000,
-    minWidth: '300px',
-    maxHeight: '400px',
-    overflowY: 'auto',
+  const getDropdownStyle = () => {
+    const baseStyle = {
+      position: 'absolute',
+      top: 0,
+      background: theme.colors.white,
+      borderRadius: theme.borderRadius.md,
+      boxShadow: theme.shadows.lg,
+      padding: theme.spacing.md,
+      zIndex: 1000,
+      minWidth: '300px',
+      maxHeight: '400px',
+      overflowY: 'auto',
+    };
+
+    if (dropdownPosition === 'left') {
+      return {
+        ...baseStyle,
+        right: '100%',
+        marginRight: theme.spacing.md,
+      };
+    } else {
+      return {
+        ...baseStyle,
+        left: '100%',
+        marginLeft: theme.spacing.md,
+      };
+    }
   };
 
   const sectionTitleStyle = {
@@ -145,16 +178,18 @@ const MoodStatus = ({ taskFeeling, energyLevel, onUpdateTaskFeeling, onUpdateEne
           <div style={valueStyle}>{energyLabels[energyLevel] || 'Not set'}</div>
         </div>
         <div style={dropdownContainerStyle} ref={dropdownRef}>
-          <Button
-            variant="outline"
-            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            style={{ padding: `${theme.spacing.sm} ${theme.spacing.md}`, fontSize: '14px' }}
-          >
-            It has changed
-          </Button>
+          <div ref={buttonRef}>
+            <Button
+              variant="outline"
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              style={{ padding: `${theme.spacing.sm} ${theme.spacing.md}`, fontSize: '14px' }}
+            >
+              It has changed
+            </Button>
+          </div>
 
           {isDropdownOpen && (
-            <div style={dropdownStyle}>
+            <div style={getDropdownStyle()}>
               <div style={firstSectionTitleStyle}>Update Task Feeling</div>
               {feelingOptions.map((option) => (
                 <div

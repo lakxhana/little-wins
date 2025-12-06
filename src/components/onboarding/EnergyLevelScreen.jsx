@@ -12,10 +12,6 @@ const EnergyLevelScreen = ({ onSelect }) => {
     navigate('/dashboard');
   };
 
-  const handleBack = () => {
-    navigate('/');
-  };
-
   const containerStyle = {
     minHeight: '100vh',
     background: theme.colors.background,
@@ -101,7 +97,7 @@ const EnergyLevelScreen = ({ onSelect }) => {
 
   return (
     <div style={containerStyle}>
-      <Header showBackButton onBack={handleBack} />
+      <Header />
       <div style={contentStyle}>
         <h1 style={titleStyle}>How's your energy today?</h1>
         <p style={subtitleStyle}>This helps us match tasks to your current state</p>
