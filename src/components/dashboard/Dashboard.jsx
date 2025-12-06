@@ -21,7 +21,27 @@ const Dashboard = ({ taskFeeling, energyLevel, onUpdateTaskFeeling, onUpdateEner
         const parsed = JSON.parse(savedTasks);
         // Validate that parsed data is an array
         if (Array.isArray(parsed)) {
-          setTasks(parsed);
+          // Clean up any invalid or expired snoozed tasks
+          const now = Date.now();
+          const cleanedTasks = parsed.map(task => {
+            // If task has snoozedUntil, validate it
+            if (task.snoozedUntil) {
+              try {
+                const snoozedUntil = new Date(task.snoozedUntil).getTime();
+                // If snooze time has passed or is invalid, clear it
+                if (isNaN(snoozedUntil) || snoozedUntil <= now) {
+                  const { snoozedUntil: _, ...taskWithoutSnooze } = task;
+                  return taskWithoutSnooze;
+                }
+              } catch (e) {
+                // Invalid date, remove snoozedUntil
+                const { snoozedUntil: _, ...taskWithoutSnooze } = task;
+                return taskWithoutSnooze;
+              }
+            }
+            return task;
+          });
+          setTasks(cleanedTasks);
         }
       }
     } catch (error) {
