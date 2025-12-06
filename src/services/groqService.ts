@@ -235,28 +235,61 @@ Respond with ONLY the JSON array, nothing else.`;
   try {
     console.log('🤖 [Groq API] Sending task breakdown request...');
     const response = await sendMessageToGroq(prompt, apiKey);
-    console.log('✅ [Groq API] Received breakdown response');
+    console.log('✅ [Groq API] Received breakdown response:', response.substring(0, 200));
     
-    // Parse the JSON response
+    // Parse the JSON response - try multiple strategies
     let jsonString = response.trim();
-    if (jsonString.startsWith('```json')) {
+    
+    // Remove markdown code blocks if present
+    if (jsonString.includes('```')) {
       jsonString = jsonString.replace(/```json\n?/g, '').replace(/```\n?/g, '');
-    } else if (jsonString.startsWith('```')) {
-      jsonString = jsonString.replace(/```\n?/g, '');
     }
     
-    let steps: TaskBreakdownStep[] = JSON.parse(jsonString);
+    // Try to extract JSON array if there's extra text
+    const jsonMatch = jsonString.match(/\[[\s\S]*\]/);
+    if (jsonMatch) {
+      jsonString = jsonMatch[0];
+    }
+    
+    jsonString = jsonString.trim();
+    
+    console.log('🔍 [Groq API] Extracted JSON string:', jsonString.substring(0, 200));
+    
+    let steps: TaskBreakdownStep[];
+    try {
+      steps = JSON.parse(jsonString);
+    } catch (parseError) {
+      console.error('❌ [Groq API] JSON parse error:', parseError);
+      console.error('❌ [Groq API] Raw response:', response);
+      throw new Error(`Failed to parse AI response as JSON. The AI may have returned invalid format. Please try again.`);
+    }
     
     // Validate steps
-    if (!Array.isArray(steps) || steps.length === 0) {
-      throw new Error('Invalid breakdown format');
+    if (!Array.isArray(steps)) {
+      console.error('❌ [Groq API] Response is not an array:', steps);
+      throw new Error('AI returned invalid format: expected an array of steps');
+    }
+    
+    if (steps.length === 0) {
+      console.warn('⚠️ [Groq API] Empty steps array received');
+      throw new Error('AI returned no steps. Please try again.');
     }
     
     // Ensure all steps have required fields
-    steps = steps.map(step => ({
-      step: step.step || '',
-      isBreak: step.isBreak || false
-    }));
+    steps = steps.map((step, index) => {
+      if (!step || typeof step !== 'object') {
+        console.warn(`⚠️ [Groq API] Invalid step at index ${index}:`, step);
+        return { step: String(step || ''), isBreak: false };
+      }
+      return {
+        step: step.step || String(step) || '',
+        isBreak: step.isBreak || false
+      };
+    }).filter(step => step.step.trim().length > 0); // Remove empty steps
+    
+    if (steps.length === 0) {
+      throw new Error('All steps were empty. Please try again.');
+    }
 
     // Limit to maximum 5 steps for neurodivergent users (to prevent overwhelm)
     if (steps.length > 5) {
@@ -268,12 +301,14 @@ Respond with ONLY the JSON array, nothing else.`;
       steps = [...workSteps.slice(0, maxWorkSteps), ...breaks.slice(0, 2)].slice(0, 5);
     }
 
-    // Return steps directly without secondary breakdown to avoid over-granularization
-    // The initial prompt should produce appropriately-sized steps
+    console.log('✅ [Groq API] Final steps:', steps);
     return steps;
   } catch (error) {
-    console.error('Task breakdown error:', error);
-    throw error;
+    console.error('❌ [Groq API] Task breakdown error:', error);
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error('An unexpected error occurred during task breakdown');
   }
 };
 

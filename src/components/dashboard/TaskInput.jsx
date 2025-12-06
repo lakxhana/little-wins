@@ -152,8 +152,11 @@ const TaskInput = ({ onAddTask, energyLevel }) => {
       console.error('Failed to break down task:', error);
       setBreakdownSteps([]);
       setShowBreakdown(false);
-      // Show error to user
-      alert('Failed to break down task. Please try again or check your API key.');
+      // Show error to user with more details
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : 'Failed to break down task. Please try again or check your API key.';
+      alert(errorMessage);
     } finally {
       setIsBreakingDown(false);
     }
