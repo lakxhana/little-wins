@@ -4,6 +4,8 @@ import MotivationalQuote from './MotivationalQuote';
 import MoodStatus from './MoodStatus';
 import TodoList from './TodoList';
 import FocusTools from './FocusTools';
+import TaskInput from './TaskInput';
+import Card from '../common/Card';
 import { theme } from '../../styles/theme';
 
 const Dashboard = ({ taskFeeling, energyLevel, onUpdateTaskFeeling, onUpdateEnergyLevel }) => {
@@ -59,6 +61,16 @@ const Dashboard = ({ taskFeeling, energyLevel, onUpdateTaskFeeling, onUpdateEner
     setTasks(tasks.filter(task => task.id !== taskId));
   };
 
+  const handleReorderTasks = (taskIds) => {
+    // Reorder tasks based on provided array of IDs
+    const taskMap = new Map(tasks.map(task => [task.id, task]));
+    const reorderedTasks = taskIds.map(id => taskMap.get(id)).filter(Boolean);
+    // Add any tasks that weren't in the reorder list (shouldn't happen, but safety check)
+    const allTaskIds = new Set(taskIds);
+    const remainingTasks = tasks.filter(task => !allTaskIds.has(task.id));
+    setTasks([...reorderedTasks, ...remainingTasks]);
+  };
+
   // Simple complexity assessment - will be replaced with AI later
   const assessComplexity = (taskText, energyLevel) => {
     const wordCount = taskText.split(' ').length;
@@ -94,6 +106,7 @@ const Dashboard = ({ taskFeeling, energyLevel, onUpdateTaskFeeling, onUpdateEner
           onToggleTask={handleToggleTask}
           onAddTask={handleAddTask}
           onDeleteTask={handleDeleteTask}
+          onReorderTasks={handleReorderTasks}
         />
         <FocusTools />
       </div>
