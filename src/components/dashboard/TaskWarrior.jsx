@@ -285,7 +285,7 @@ const TaskWarrior = () => {
     width: '60px',
     height: '60px',
     borderRadius: '50%',
-    background: 'linear-gradient(135deg, #DDA0DD 0%, #9370DB 100%)',
+    background: `linear-gradient(135deg, ${theme.colors.primaryBlueLight} 0%, ${theme.colors.primaryBlue} 100%)`,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -298,7 +298,7 @@ const TaskWarrior = () => {
     position: 'absolute',
     bottom: '-4px',
     right: '-4px',
-    background: '#6A1B9A',
+    background: theme.colors.primaryBlueDark,
     color: theme.colors.white,
     borderRadius: theme.borderRadius.full,
     padding: '2px 8px',
@@ -336,7 +336,7 @@ const TaskWarrior = () => {
   const xpBarFillStyle = {
     height: '100%',
     width: `${xpPercentage}%`,
-    background: 'linear-gradient(90deg, #9370DB 0%, #DDA0DD 100%)',
+    background: `linear-gradient(90deg, ${theme.colors.primaryBlue} 0%, ${theme.colors.primaryBlueLight} 100%)`,
     borderRadius: theme.borderRadius.full,
     transition: 'width 0.3s ease-in-out',
   };
@@ -424,7 +424,7 @@ const TaskWarrior = () => {
   });
 
   const streakBannerStyle = {
-    background: 'linear-gradient(90deg, #FFB347 0%, #FFB6C1 100%)',
+    background: `linear-gradient(90deg, ${theme.colors.primaryBlue} 0%, ${theme.colors.primaryBlueLight} 100%)`,
     borderRadius: theme.borderRadius.md,
     padding: theme.spacing.md,
     display: 'flex',
@@ -452,7 +452,7 @@ const TaskWarrior = () => {
   const streakValueStyle = {
     fontSize: '24px',
     fontWeight: '700',
-    color: '#FF6600',
+    color: theme.colors.white,
   };
 
   const messageStyle = {
@@ -517,7 +517,7 @@ const TaskWarrior = () => {
           </div>
 
           {/* Momentum Stat */}
-          <div style={statCardStyle('#DDA0DD')}>
+          <div style={statCardStyle(theme.colors.primaryBlue)}>
             <div style={statLabelStyle}>
               ⇄ Momentum
             </div>
@@ -526,7 +526,7 @@ const TaskWarrior = () => {
               {momentumStatus.text} {momentumStatus.emoji}
             </div>
             <div style={statProgressBarStyle}>
-              <div style={statProgressFillStyle(momentumPercentage, '#DDA0DD')}></div>
+              <div style={statProgressFillStyle(momentumPercentage, theme.colors.primaryBlue)}></div>
             </div>
           </div>
         </div>
