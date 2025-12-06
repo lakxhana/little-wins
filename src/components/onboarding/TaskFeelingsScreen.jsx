@@ -1,6 +1,5 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import Button from '../common/Button';
 import Card from '../common/Card';
 import { theme } from '../../styles/theme';
 

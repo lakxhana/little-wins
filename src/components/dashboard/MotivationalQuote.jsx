@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Card from '../common/Card';
-import Button from '../common/Button';
 import { theme } from '../../styles/theme';
 
 const MotivationalQuote = () => {
@@ -15,14 +14,29 @@ const MotivationalQuote = () => {
 
   const [currentQuote, setCurrentQuote] = useState(quotes[0]);
   const [isLoading, setIsLoading] = useState(false);
+  const timeoutRef = useRef(null);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   const refreshQuote = () => {
     setIsLoading(true);
+    // Clear any existing timeout
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
     // Simulate AI call - replace with actual AI service later
-    setTimeout(() => {
+    timeoutRef.current = setTimeout(() => {
       const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
       setCurrentQuote(randomQuote);
       setIsLoading(false);
+      timeoutRef.current = null;
     }, 500);
   };
 

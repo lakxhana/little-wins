@@ -7,12 +7,18 @@ const useUserState = () => {
 
   // Load user state from localStorage on mount
   useEffect(() => {
-    const savedState = localStorage.getItem('userState');
-    if (savedState) {
-      const { taskFeeling, energyLevel, lastUpdated } = JSON.parse(savedState);
-      setTaskFeeling(taskFeeling);
-      setEnergyLevel(energyLevel);
-      setIsOnboarded(true);
+    try {
+      const savedState = localStorage.getItem('userState');
+      if (savedState) {
+        const { taskFeeling, energyLevel, lastUpdated } = JSON.parse(savedState);
+        setTaskFeeling(taskFeeling);
+        setEnergyLevel(energyLevel);
+        setIsOnboarded(true);
+      }
+    } catch (error) {
+      console.error('Failed to load user state from localStorage:', error);
+      localStorage.removeItem('userState');
+      // Leave state at safe defaults (null, null, false)
     }
   }, []);
 
@@ -31,10 +37,18 @@ const useUserState = () => {
 
   const updateTaskFeeling = (feeling) => {
     setTaskFeeling(feeling);
+    // If energyLevel already exists, set isOnboarded immediately
+    if (energyLevel) {
+      setIsOnboarded(true);
+    }
   };
 
   const updateEnergyLevel = (level) => {
     setEnergyLevel(level);
+    // If taskFeeling already exists, set isOnboarded immediately
+    if (taskFeeling) {
+      setIsOnboarded(true);
+    }
   };
 
   const resetOnboarding = () => {

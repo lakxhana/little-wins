@@ -8,19 +8,36 @@ import { theme } from '../../styles/theme';
 
 const Dashboard = ({ taskFeeling, energyLevel }) => {
   const [tasks, setTasks] = useState([]);
+  const [hasLoaded, setHasLoaded] = useState(false);
 
   // Load tasks from localStorage on mount
   useEffect(() => {
-    const savedTasks = localStorage.getItem('tasks');
-    if (savedTasks) {
-      setTasks(JSON.parse(savedTasks));
+    try {
+      const savedTasks = localStorage.getItem('tasks');
+      if (savedTasks) {
+        const parsed = JSON.parse(savedTasks);
+        // Validate that parsed data is an array
+        if (Array.isArray(parsed)) {
+          setTasks(parsed);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load tasks from localStorage:', error);
+    } finally {
+      setHasLoaded(true);
     }
   }, []);
 
-  // Save tasks to localStorage whenever they change
+  // Save tasks to localStorage whenever they change (but only after initial load)
   useEffect(() => {
-    localStorage.setItem('tasks', JSON.stringify(tasks));
-  }, [tasks]);
+    if (hasLoaded) {
+      try {
+        localStorage.setItem('tasks', JSON.stringify(tasks));
+      } catch (error) {
+        console.error('Failed to save tasks to localStorage:', error);
+      }
+    }
+  }, [tasks, hasLoaded]);
 
   const handleAddTask = (taskText) => {
     const newTask = {

@@ -2,18 +2,22 @@ import React, { useState } from 'react';
 import Button from '../common/Button';
 import { theme } from '../../styles/theme';
 
-const TaskInput = ({ onAddTask, energyLevel }) => {
+const TaskInput = ({ onAddTask, energyLevel }) => { // TODO: energyLevel unused, will be used for AI task complexity analysis
   const [taskText, setTaskText] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (taskText.trim()) {
-      setIsAnalyzing(true);
+    const trimmed = taskText.trim();
+    if (!trimmed) return;
+
+    setIsAnalyzing(true);
+    try {
       // Simulate AI analysis - replace with actual AI service later
       await new Promise(resolve => setTimeout(resolve, 800));
-      onAddTask(taskText);
+      onAddTask(trimmed);
       setTaskText('');
+    } finally {
       setIsAnalyzing(false);
     }
   };
