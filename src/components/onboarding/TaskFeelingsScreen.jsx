@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import Header from '../common/Header';
 import Card from '../common/Card';
 import { theme } from '../../styles/theme';
 
@@ -13,12 +14,16 @@ const TaskFeelingsScreen = ({ onSelect }) => {
 
   const containerStyle = {
     minHeight: '100vh',
+    background: theme.colors.background,
+  };
+
+  const contentStyle = {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
     padding: theme.spacing.lg,
-    background: theme.colors.background,
+    minHeight: 'calc(100vh - 80px)',
   };
 
   const titleStyle = {
@@ -67,29 +72,32 @@ const TaskFeelingsScreen = ({ onSelect }) => {
 
   return (
     <div style={containerStyle}>
-      <h1 style={titleStyle}>Welcome to Little Wins!</h1>
-      <p style={subtitleStyle}>How are you feeling about your tasks today?</p>
+      <Header />
+      <div style={contentStyle}>
+        <h1 style={titleStyle}>Welcome to Little Wins!</h1>
+        <p style={subtitleStyle}>How are you feeling about your tasks today?</p>
 
-      <div style={optionsContainerStyle}>
-        <Card
-          style={optionCardStyle}
-          onClick={() => handleSelect('overwhelmed')}
-        >
-          <div style={optionTitleStyle}>😰 I'm getting overwhelmed</div>
-          <div style={optionDescStyle}>
-            I need help managing the load and breaking things down
-          </div>
-        </Card>
+        <div style={optionsContainerStyle}>
+          <Card
+            style={optionCardStyle}
+            onClick={() => handleSelect('overwhelmed')}
+          >
+            <div style={optionTitleStyle}>😰 I'm getting overwhelmed</div>
+            <div style={optionDescStyle}>
+              I need help managing the load and breaking things down
+            </div>
+          </Card>
 
-        <Card
-          style={optionCardStyle}
-          onClick={() => handleSelect('structure')}
-        >
-          <div style={optionTitleStyle}>📋 I just need help with structure</div>
-          <div style={optionDescStyle}>
-            I'm ready to tackle tasks, just need organization
-          </div>
-        </Card>
+          <Card
+            style={optionCardStyle}
+            onClick={() => handleSelect('structure')}
+          >
+            <div style={optionTitleStyle}>📋 I just need help with structure</div>
+            <div style={optionDescStyle}>
+              I'm ready to tackle tasks, just need organization
+            </div>
+          </Card>
+        </div>
       </div>
     </div>
   );

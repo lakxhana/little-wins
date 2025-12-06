@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import Header from '../common/Header';
 import Card from '../common/Card';
 import { theme } from '../../styles/theme';
 
@@ -11,14 +12,22 @@ const EnergyLevelScreen = ({ onSelect }) => {
     navigate('/dashboard');
   };
 
+  const handleBack = () => {
+    navigate('/');
+  };
+
   const containerStyle = {
     minHeight: '100vh',
+    background: theme.colors.background,
+  };
+
+  const contentStyle = {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
     padding: theme.spacing.lg,
-    background: theme.colors.background,
+    minHeight: 'calc(100vh - 80px)',
   };
 
   const titleStyle = {
@@ -88,23 +97,26 @@ const EnergyLevelScreen = ({ onSelect }) => {
 
   return (
     <div style={containerStyle}>
-      <h1 style={titleStyle}>How's your energy today?</h1>
-      <p style={subtitleStyle}>This helps us match tasks to your current state</p>
+      <Header showBackButton onBack={handleBack} />
+      <div style={contentStyle}>
+        <h1 style={titleStyle}>How's your energy today?</h1>
+        <p style={subtitleStyle}>This helps us match tasks to your current state</p>
 
-      <div style={optionsContainerStyle}>
-        {energyOptions.map((option) => (
-          <Card
-            key={option.level}
-            style={cardStyle}
-            onClick={() => handleSelect(option.level)}
-          >
-            <div style={{ fontSize: '32px', marginBottom: theme.spacing.sm }}>
-              {option.emoji}
-            </div>
-            <div style={optionTitleStyle}>{option.label}</div>
-            <div style={optionDescStyle}>{option.description}</div>
-          </Card>
-        ))}
+        <div style={optionsContainerStyle}>
+          {energyOptions.map((option) => (
+            <Card
+              key={option.level}
+              style={cardStyle}
+              onClick={() => handleSelect(option.level)}
+            >
+              <div style={{ fontSize: '32px', marginBottom: theme.spacing.sm }}>
+                {option.emoji}
+              </div>
+              <div style={optionTitleStyle}>{option.label}</div>
+              <div style={optionDescStyle}>{option.description}</div>
+            </Card>
+          ))}
+        </div>
       </div>
     </div>
   );
