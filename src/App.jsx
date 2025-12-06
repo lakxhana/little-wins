@@ -3,6 +3,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import TaskFeelingsScreen from './components/onboarding/TaskFeelingsScreen';
 import EnergyLevelScreen from './components/onboarding/EnergyLevelScreen';
 import Dashboard from './components/dashboard/Dashboard';
+import Settings from './components/settings/Settings';
+import Review from './components/review/Review';
 import useUserState from './hooks/useUserState';
 
 function App() {
@@ -38,6 +40,30 @@ function App() {
                 onUpdateTaskFeeling={updateTaskFeeling}
                 onUpdateEnergyLevel={updateEnergyLevel}
               />
+            ) : (
+              <Navigate to="/" replace />
+            )
+          }
+        />
+
+        {/* Settings */}
+        <Route
+          path="/settings"
+          element={
+            isOnboarded ? (
+              <Settings />
+            ) : (
+              <Navigate to="/" replace />
+            )
+          }
+        />
+
+        {/* Review */}
+        <Route
+          path="/review"
+          element={
+            isOnboarded ? (
+              <Review />
             ) : (
               <Navigate to="/" replace />
             )

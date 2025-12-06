@@ -21,7 +21,11 @@ const TodoList = ({ tasks, onToggleTask, onAddTask, onDeleteTask, onReorderTasks
     }
   };
 
-  const handleDone = () => currentTask && onToggleTask(currentTask.id);
+  const handleDone = () => {
+    if (currentTask) {
+      onToggleTask(currentTask.id);
+    }
+  };
 
   const handleSnooze = () => {
     if (currentTask && onSnooze) {
