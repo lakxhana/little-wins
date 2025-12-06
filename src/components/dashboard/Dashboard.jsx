@@ -42,13 +42,24 @@ const Dashboard = ({ taskFeeling, energyLevel, onUpdateTaskFeeling, onUpdateEner
   }, [tasks, hasLoaded]);
 
   const handleAddTask = (taskText) => {
-    const newTask = {
-      id: Date.now(),
-      text: taskText,
+    // Support both single task and array of tasks
+    const taskTexts = Array.isArray(taskText) ? taskText : [taskText];
+    
+    // Generate unique IDs using timestamp + random + index to ensure uniqueness
+    // Use a single timestamp base to ensure all tasks from the same batch are grouped
+    const baseId = Date.now();
+    const newTasks = taskTexts.map((text, index) => ({
+      id: `${baseId}-${index}-${Math.random().toString(36).substr(2, 9)}`, // Ensure unique IDs with order preserved
+      text: text,
       completed: false,
-      complexity: assessComplexity(taskText, energyLevel),
-    };
-    setTasks([...tasks, newTask]);
+      complexity: assessComplexity(text, energyLevel),
+    }));
+    
+    // Use functional update to ensure we're working with the latest state
+    setTasks(prevTasks => {
+      // Add new tasks to the end, preserving order
+      return [...prevTasks, ...newTasks];
+    });
   };
 
   const handleToggleTask = (taskId) => {

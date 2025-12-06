@@ -1,88 +1,189 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Button from '../common/Button';
 import Card from '../common/Card';
 import { theme } from '../../styles/theme';
+import { analyzeTaskWithGroq, breakDownTaskWithGroq } from '../../services/groqService';
 
-const TaskInput = ({ onAddTask, energyLevel }) => { // TODO: energyLevel unused, will be used for AI task complexity analysis
+const TaskInput = ({ onAddTask, energyLevel }) => {
   const [taskText, setTaskText] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisData, setAnalysisData] = useState(null);
   const [adhdTips, setAdhdTips] = useState([]);
+  const [isAnalyzingTask, setIsAnalyzingTask] = useState(false);
+  const [breakdownSteps, setBreakdownSteps] = useState([]);
+  const [isBreakingDown, setIsBreakingDown] = useState(false);
+  const [showBreakdown, setShowBreakdown] = useState(false);
+  const analysisTimeoutRef = useRef(null);
+  const abortControllerRef = useRef(null);
 
-  // Mock ADHD tips generator - will be replaced with actual AI service later
-  const generateAdhdTips = (text, difficulty) => {
-    const tips = [];
-    
-    // Always include timer tip
-    tips.push('Set timer to prevent time blindness');
-    
-    // Add tips based on difficulty
-    if (difficulty === 'Hard') {
-      tips.push('Break it down more if it feels too big');
-    } else if (difficulty === 'Medium') {
-      tips.push('Break it down more if it feels too big');
+  // Get API key from environment variable
+  const apiKey = process.env.REACT_APP_GROQ_API_KEY || '';
+
+  // Helper function to parse time string to minutes
+  const parseTimeToMinutes = (timeStr) => {
+    if (!timeStr) return 0;
+    const lower = timeStr.toLowerCase();
+    if (lower.includes('h')) {
+      const hours = parseFloat(lower.replace('h', '').trim());
+      return hours * 60;
+    } else if (lower.includes('m')) {
+      return parseFloat(lower.replace('m', '').trim()) || 0;
     }
-    
-    // Add additional tips based on task content
-    const lowerText = text.toLowerCase();
-    if (lowerText.includes('clean') || lowerText.includes('organize')) {
-      tips.push('Start with one small area first');
-    }
-    if (lowerText.includes('study') || lowerText.includes('read') || lowerText.includes('work')) {
-      tips.push('Use the Pomodoro technique');
-    }
-    
-    // Ensure we have at least 2 tips
-    if (tips.length < 2) {
-      tips.push('Break it down more if it feels too big');
-    }
-    
-    return tips.slice(0, 2); // Return max 2 tips
+    return 0;
   };
 
-  // Mock AI analysis function - will be replaced with actual AI service later
-  const analyzeTask = (text) => {
+  // Analyze task with Groq as user types
+  const analyzeTask = async (text) => {
     if (!text.trim()) {
       setAnalysisData(null);
       setAdhdTips([]);
       return;
     }
 
-    // Simple mock analysis based on text length and content
-    const textLength = text.length;
-    let difficulty = 'Easy';
-    let time = '5m';
-    let xpReward = 10;
-
-    if (textLength > 50 || text.toLowerCase().includes('complex') || text.toLowerCase().includes('difficult')) {
-      difficulty = 'Hard';
-      time = '30m';
-      xpReward = 30;
-    } else if (textLength > 20 || text.toLowerCase().includes('medium')) {
-      difficulty = 'Medium';
-      time = '15m';
-      xpReward = 20;
+    // Cancel previous analysis if still running
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
     }
 
-    setAnalysisData({
-      difficulty,
-      time,
-      xpReward,
-    });
+    // Only analyze if API key is available
+    if (!apiKey) {
+      setAnalysisData(null);
+      setAdhdTips([]);
+      setBreakdownSteps([]);
+      setShowBreakdown(false);
+      return;
+    }
 
-    // Generate ADHD tips
-    const tips = generateAdhdTips(text, difficulty);
-    setAdhdTips(tips);
+    setIsAnalyzingTask(true);
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
+    try {
+      console.log('🤖 AI: Analyzing task with Groq AI...', { task: text, energyLevel });
+      const analysis = await analyzeTaskWithGroq(text, energyLevel, apiKey);
+      console.log('✅ AI: Analysis complete', analysis);
+      
+      // Only update if not aborted
+      if (!controller.signal.aborted) {
+        // Check if time estimate indicates a hard task (30+ minutes)
+        const timeMinutes = parseTimeToMinutes(analysis.time);
+        const isHardTask = timeMinutes >= 30 || analysis.difficulty === 'Hard';
+        
+        // Override difficulty if time indicates hard task
+        const finalDifficulty = isHardTask ? 'Hard' : analysis.difficulty;
+        const finalXpReward = isHardTask ? 30 : analysis.xpReward;
+        
+        setAnalysisData({
+          difficulty: finalDifficulty,
+          time: analysis.time,
+          xpReward: finalXpReward,
+        });
+        setAdhdTips(analysis.adhdTips);
+        
+        // If task is Hard (by difficulty or time), automatically break it down
+        if (isHardTask && apiKey) {
+          breakDownTask(text);
+        } else {
+          setBreakdownSteps([]);
+          setShowBreakdown(false);
+        }
+      }
+    } catch (error) {
+      if (!controller.signal.aborted) {
+        console.error('Failed to analyze task:', error);
+        setAnalysisData(null);
+        setAdhdTips([]);
+        setBreakdownSteps([]);
+        setShowBreakdown(false);
+      }
+    } finally {
+      if (!controller.signal.aborted) {
+        setIsAnalyzingTask(false);
+      }
+      abortControllerRef.current = null;
+    }
   };
 
-  // Analyze task as user types
+  // Analyze task as user types (debounced)
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      analyzeTask(taskText);
-    }, 300); // Debounce analysis
+    // Clear previous timeout
+    if (analysisTimeoutRef.current) {
+      clearTimeout(analysisTimeoutRef.current);
+    }
 
-    return () => clearTimeout(timeoutId);
-  }, [taskText]);
+    // Set new timeout for debounced analysis
+    analysisTimeoutRef.current = setTimeout(() => {
+      analyzeTask(taskText);
+    }, 800); // Increased debounce for API calls
+
+    return () => {
+      if (analysisTimeoutRef.current) {
+        clearTimeout(analysisTimeoutRef.current);
+      }
+      // Abort any ongoing analysis when component unmounts or text changes
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+      }
+    };
+  }, [taskText, energyLevel]);
+
+  const breakDownTask = async (text) => {
+    if (!apiKey) {
+      console.warn('No API key available for breakdown');
+      return;
+    }
+    
+    setIsBreakingDown(true);
+    setShowBreakdown(true); // Show loading state immediately
+    try {
+      console.log('🤖 AI: Breaking down task with Groq AI...', { task: text, energyLevel });
+      const steps = await breakDownTaskWithGroq(text, energyLevel, apiKey);
+      console.log('✅ AI: Breakdown complete', { stepCount: steps?.length, steps });
+      if (steps && steps.length > 0) {
+        setBreakdownSteps(steps);
+        setShowBreakdown(true);
+      } else {
+        console.warn('Breakdown returned empty steps');
+        setBreakdownSteps([]);
+        setShowBreakdown(false);
+      }
+    } catch (error) {
+      console.error('Failed to break down task:', error);
+      setBreakdownSteps([]);
+      setShowBreakdown(false);
+      // Show error to user
+      alert('Failed to break down task. Please try again or check your API key.');
+    } finally {
+      setIsBreakingDown(false);
+    }
+  };
+
+  const handleAddAllSteps = () => {
+    // Add all steps including breaks as separate tasks in a single batch
+    // Extract all step texts in order - preserve the exact order from breakdownSteps
+    const stepTexts = breakdownSteps.map(stepItem => stepItem.step);
+    
+    // Verify we have steps to add
+    if (stepTexts.length === 0) {
+      console.warn('No steps to add');
+      return;
+    }
+    
+    // Add all tasks at once - this will add them in order
+    onAddTask(stepTexts);
+    
+    // Clear the input and analysis
+    setTaskText('');
+    setAnalysisData(null);
+    setAdhdTips([]);
+    setBreakdownSteps([]);
+    setShowBreakdown(false);
+  };
+
+  const handleAddStep = (step) => {
+    onAddTask(step);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -97,6 +198,8 @@ const TaskInput = ({ onAddTask, energyLevel }) => { // TODO: energyLevel unused,
       setTaskText('');
       setAnalysisData(null);
       setAdhdTips([]);
+      setBreakdownSteps([]);
+      setShowBreakdown(false);
     } finally {
       setIsAnalyzing(false);
     }
@@ -195,6 +298,85 @@ const TaskInput = ({ onAddTask, energyLevel }) => { // TODO: energyLevel unused,
     color: theme.colors.primaryText,
   };
 
+  const warningBoxStyle = {
+    backgroundColor: '#FEF3C7',
+    border: '2px solid #FCD34D',
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
+    marginTop: theme.spacing.sm,
+    marginBottom: theme.spacing.sm,
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+  };
+
+  const breakdownCardStyle = {
+    border: `2px solid ${theme.colors.primaryBlue}`,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
+    marginTop: theme.spacing.sm,
+    marginBottom: theme.spacing.sm,
+    backgroundColor: '#F5F3FF',
+  };
+
+  const breakdownHeaderStyle = {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: theme.spacing.md,
+  };
+
+  const breakdownTitleStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing.xs,
+    fontSize: '16px',
+    fontWeight: '600',
+    color: theme.colors.primaryText,
+  };
+
+  const difficultyBadgeStyle = {
+    backgroundColor: theme.colors.primaryOrange,
+    color: 'white',
+    padding: `${theme.spacing.xs} ${theme.spacing.sm}`,
+    borderRadius: theme.borderRadius.sm,
+    fontSize: '12px',
+    fontWeight: '600',
+  };
+
+  const stepItemStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+    padding: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
+    backgroundColor: 'white',
+    border: `1px solid ${theme.colors.lightBlue}`,
+    borderRadius: theme.borderRadius.sm,
+    cursor: 'pointer',
+    transition: theme.transitions.fast,
+  };
+
+  const stepNumberStyle = {
+    width: '28px',
+    height: '28px',
+    borderRadius: '50%',
+    backgroundColor: theme.colors.primaryBlue,
+    color: 'white',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '14px',
+    fontWeight: '600',
+    flexShrink: 0,
+  };
+
+  const breakStepStyle = {
+    ...stepItemStyle,
+    backgroundColor: '#FFF7ED',
+    border: `1px solid #FCD34D`,
+  };
+
   return (
     <>
       <style>{animationStyle}</style>
@@ -220,37 +402,147 @@ const TaskInput = ({ onAddTask, energyLevel }) => { // TODO: energyLevel unused,
         </div>
       </form>
       
-      {taskText.trim() && analysisData && (
+      {taskText.trim() && (analysisData || isAnalyzingTask) && (
         <>
           <Card style={dropdownCardStyle}>
             <div style={dropdownHeaderStyle}>
               <span>✨</span>
               <span>AI Auto-Analysis</span>
+              {isAnalyzingTask && <span style={{ fontSize: '12px', opacity: 0.7 }}>(🤖 AI Analyzing...)</span>}
+              {!isAnalyzingTask && analysisData && <span style={{ fontSize: '10px', opacity: 0.6, marginLeft: '8px', color: '#10b981' }}>✓ Powered by Groq AI</span>}
             </div>
-            <div style={analysisRowStyle}>
-              <span style={analysisLabelStyle}>Difficulty:</span>
-              <span style={analysisValueStyle}>
-                {analysisData.difficulty} 🌱
-              </span>
-            </div>
-            <div style={analysisRowStyle}>
-              <span style={analysisLabelStyle}>Time:</span>
-              <span style={analysisValueStyle}>
-                {analysisData.time} 🕐
-              </span>
-            </div>
-            <div style={analysisRowStyle}>
-              <span style={analysisLabelStyle}>XP Reward:</span>
-              <span style={analysisValueStyle}>
-                +{analysisData.xpReward} ⚡
-              </span>
-            </div>
+            {analysisData ? (
+              <>
+                <div style={analysisRowStyle}>
+                  <span style={analysisLabelStyle}>Difficulty:</span>
+                  <span style={analysisValueStyle}>
+                    {analysisData.difficulty} 🌱
+                  </span>
+                </div>
+                <div style={analysisRowStyle}>
+                  <span style={analysisLabelStyle}>Time:</span>
+                  <span style={analysisValueStyle}>
+                    {analysisData.time} 🕐
+                  </span>
+                </div>
+                <div style={analysisRowStyle}>
+                  <span style={analysisLabelStyle}>XP Reward:</span>
+                  <span style={analysisValueStyle}>
+                    +{analysisData.xpReward} ⚡
+                  </span>
+                </div>
+              </>
+            ) : (
+              <div style={{ padding: theme.spacing.sm, textAlign: 'center', opacity: 0.7 }}>
+                Analyzing task...
+              </div>
+            )}
           </Card>
           
+          {analysisData?.difficulty === 'Hard' && !showBreakdown && !isBreakingDown && (
+            <Card style={warningBoxStyle}>
+              <span style={{ fontSize: '20px' }}>⚠️</span>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: '600', marginBottom: theme.spacing.xs }}>
+                  This looks like a BIG task!
+                </div>
+                <div style={{ fontSize: '14px', marginBottom: theme.spacing.sm }}>
+                  I strongly recommend breaking it down into smaller steps. Ready for the breakdown?
+                </div>
+                <Button
+                  onClick={() => breakDownTask(taskText)}
+                  variant="primary"
+                  style={{
+                    padding: `${theme.spacing.sm} ${theme.spacing.md}`,
+                    fontSize: '14px',
+                  }}
+                >
+                  Break It Down
+                </Button>
+              </div>
+            </Card>
+          )}
+
+          {analysisData?.difficulty === 'Hard' && (showBreakdown || isBreakingDown) && (
+            <Card style={breakdownCardStyle}>
+              <div style={breakdownHeaderStyle}>
+                <div style={breakdownTitleStyle}>
+                  <span>✨</span>
+                  <span>AI Task Assistant</span>
+                  <span style={difficultyBadgeStyle}>HARD</span>
+                  {!isBreakingDown && breakdownSteps.length > 0 && <span style={{ fontSize: '10px', opacity: 0.6, marginLeft: '8px', color: '#10b981' }}>✓ Powered by Groq AI</span>}
+                </div>
+              </div>
+              
+              {isBreakingDown ? (
+                <div style={{ padding: theme.spacing.md, textAlign: 'center', opacity: 0.7 }}>
+                  Breaking down task into manageable steps...
+                </div>
+              ) : breakdownSteps.length === 0 && !isBreakingDown ? (
+                <div style={{ padding: theme.spacing.md, textAlign: 'center', opacity: 0.7 }}>
+                  <div style={{ marginBottom: theme.spacing.sm }}>Breakdown failed or is empty.</div>
+                  <Button
+                    onClick={() => breakDownTask(taskText)}
+                    variant="outline"
+                    style={{ fontSize: '14px' }}
+                  >
+                    Try Again
+                  </Button>
+                </div>
+              ) : breakdownSteps.length > 0 ? (
+                <>
+                  <div style={{ marginBottom: theme.spacing.md, fontSize: '14px', color: theme.colors.primaryText }}>
+                    I've broken this down into {breakdownSteps.length} manageable steps
+                  </div>
+                  {breakdownSteps.map((stepItem, index) => (
+                    <div
+                      key={index}
+                      style={stepItem.isBreak ? breakStepStyle : stepItemStyle}
+                      onClick={() => handleAddStep(stepItem.step)}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = stepItem.isBreak ? '#FEF3C7' : '#F0F9FF';
+                        e.currentTarget.style.borderColor = stepItem.isBreak ? '#FCD34D' : theme.colors.primaryBlue;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = stepItem.isBreak ? '#FFF7ED' : 'white';
+                        e.currentTarget.style.borderColor = stepItem.isBreak ? '#FCD34D' : theme.colors.lightBlue;
+                      }}
+                    >
+                      <div style={stepNumberStyle}>
+                        {index + 1}
+                      </div>
+                      <div style={{ flex: 1, fontSize: '14px', color: theme.colors.primaryText }}>
+                        {stepItem.step}
+                      </div>
+                    </div>
+                  ))}
+                  <Button
+                    onClick={handleAddAllSteps}
+                    variant="primary"
+                    style={{
+                      width: '100%',
+                      marginTop: theme.spacing.md,
+                      padding: theme.spacing.md,
+                      fontSize: '16px',
+                      fontWeight: '600',
+                    }}
+                  >
+                    <span>✨</span>
+                    <span style={{ marginLeft: theme.spacing.xs }}>Add All Steps</span>
+                  </Button>
+                  <div style={{ marginTop: theme.spacing.sm, fontSize: '12px', color: theme.colors.primaryText, opacity: 0.7, display: 'flex', alignItems: 'center', gap: theme.spacing.xs }}>
+                    <span>✨</span>
+                    <span>AI suggestions based on neurodivergent-friendly task management</span>
+                  </div>
+                </>
+              ) : null}
+            </Card>
+          )}
+
           {adhdTips.length > 0 && (
             <Card style={tipsCardStyle}>
               <div style={dropdownHeaderStyle}>
-                <span>✨</span>
+                <span>💡</span>
                 <span>ADHD Tips for this task</span>
               </div>
               {adhdTips.map((tip, index) => (
