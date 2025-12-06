@@ -6,7 +6,7 @@ import TodoList from './TodoList';
 import FocusTools from './FocusTools';
 import { theme } from '../../styles/theme';
 
-const Dashboard = ({ taskFeeling, energyLevel }) => {
+const Dashboard = ({ taskFeeling, energyLevel, onUpdateTaskFeeling, onUpdateEnergyLevel }) => {
   const [tasks, setTasks] = useState([]);
   const [hasLoaded, setHasLoaded] = useState(false);
 
@@ -83,7 +83,12 @@ const Dashboard = ({ taskFeeling, energyLevel }) => {
       <Header />
       <div style={contentStyle}>
         <MotivationalQuote />
-        <MoodStatus taskFeeling={taskFeeling} energyLevel={energyLevel} />
+        <MoodStatus
+          taskFeeling={taskFeeling}
+          energyLevel={energyLevel}
+          onUpdateTaskFeeling={onUpdateTaskFeeling}
+          onUpdateEnergyLevel={onUpdateEnergyLevel}
+        />
         <TodoList
           tasks={tasks}
           onToggleTask={handleToggleTask}

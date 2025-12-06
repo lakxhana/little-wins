@@ -32,7 +32,12 @@ function App() {
           path="/dashboard"
           element={
             isOnboarded ? (
-              <Dashboard taskFeeling={taskFeeling} energyLevel={energyLevel} />
+              <Dashboard
+                taskFeeling={taskFeeling}
+                energyLevel={energyLevel}
+                onUpdateTaskFeeling={updateTaskFeeling}
+                onUpdateEnergyLevel={updateEnergyLevel}
+              />
             ) : (
               <Navigate to="/" replace />
             )
