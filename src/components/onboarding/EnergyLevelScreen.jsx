@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import Header from '../common/Header';
 import Card from '../common/Card';
 import { theme } from '../../styles/theme';
 
@@ -13,12 +14,16 @@ const EnergyLevelScreen = ({ onSelect }) => {
 
   const containerStyle = {
     minHeight: '100vh',
+    background: theme.colors.background,
+  };
+
+  const contentStyle = {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
     padding: theme.spacing.lg,
-    background: theme.colors.background,
+    minHeight: 'calc(100vh - 80px)',
   };
 
   const titleStyle = {
@@ -66,12 +71,16 @@ const EnergyLevelScreen = ({ onSelect }) => {
     },
   ];
 
-  const cardStyle = {
+  const [hoveredCard, setHoveredCard] = React.useState(null);
+
+  const getCardStyle = (level) => ({
     cursor: 'pointer',
     transition: theme.transitions.normal,
     padding: theme.spacing.lg,
     textAlign: 'center',
-  };
+    background: hoveredCard === level ? theme.colors.lightBlue : theme.colors.white,
+    transform: hoveredCard === level ? 'translateY(-4px)' : 'translateY(0)',
+  });
 
   const optionTitleStyle = {
     fontSize: '18px',
@@ -88,23 +97,28 @@ const EnergyLevelScreen = ({ onSelect }) => {
 
   return (
     <div style={containerStyle}>
-      <h1 style={titleStyle}>How's your energy today?</h1>
-      <p style={subtitleStyle}>This helps us match tasks to your current state</p>
+      <Header />
+      <div style={contentStyle}>
+        <h1 style={titleStyle}>How's your energy today?</h1>
+        <p style={subtitleStyle}>This helps us match tasks to your current state</p>
 
-      <div style={optionsContainerStyle}>
-        {energyOptions.map((option) => (
-          <Card
-            key={option.level}
-            style={cardStyle}
-            onClick={() => handleSelect(option.level)}
-          >
-            <div style={{ fontSize: '32px', marginBottom: theme.spacing.sm }}>
-              {option.emoji}
-            </div>
-            <div style={optionTitleStyle}>{option.label}</div>
-            <div style={optionDescStyle}>{option.description}</div>
-          </Card>
-        ))}
+        <div style={optionsContainerStyle}>
+          {energyOptions.map((option) => (
+            <Card
+              key={option.level}
+              style={getCardStyle(option.level)}
+              onClick={() => handleSelect(option.level)}
+              onMouseEnter={() => setHoveredCard(option.level)}
+              onMouseLeave={() => setHoveredCard(null)}
+            >
+              <div style={{ fontSize: '32px', marginBottom: theme.spacing.sm }}>
+                {option.emoji}
+              </div>
+              <div style={optionTitleStyle}>{option.label}</div>
+              <div style={optionDescStyle}>{option.description}</div>
+            </Card>
+          ))}
+        </div>
       </div>
     </div>
   );

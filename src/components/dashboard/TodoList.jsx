@@ -62,7 +62,7 @@ const TodoList = ({ tasks, onToggleTask, onAddTask, onDeleteTask }) => {
 
   return (
     <Card>
-      <div style={titleStyle}>📝 Your Tasks</div>
+      <div style={titleStyle}>📝 My Tasks</div>
 
       {tasks.length === 0 ? (
         <div style={emptyStateStyle}>

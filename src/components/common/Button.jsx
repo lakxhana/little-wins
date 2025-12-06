@@ -14,12 +14,12 @@ const Button = ({
     primary: {
       background: theme.colors.primaryBlue,
       color: theme.colors.white,
-      hover: '#3a5469',
+      hover: theme.colors.lightBlue,
     },
     secondary: {
       background: theme.colors.primaryGreen,
       color: theme.colors.white,
-      hover: '#7a9d7a',
+      hover: theme.colors.lightBlue,
     },
     outline: {
       background: 'transparent',
@@ -30,7 +30,7 @@ const Button = ({
     alert: {
       background: theme.colors.primaryOrange,
       color: theme.colors.white,
-      hover: '#b35518',
+      hover: theme.colors.lightBlue,
     },
   };
 
@@ -52,7 +52,6 @@ const Button = ({
 
   const hoverStyle = isHovered && !disabled ? {
     background: variants[variant].hover,
-    transform: 'translateY(-2px)',
     boxShadow: theme.shadows.md,
   } : {};
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import { theme } from '../../styles/theme';
 
-const Card = ({ children, style, className, gradient = false, onClick }) => {
+const Card = ({ children, style, className, gradient = false, onClick, onMouseEnter, onMouseLeave }) => {
   const cardStyle = {
     background: gradient ? theme.gradient : theme.colors.white,
     borderRadius: theme.borderRadius.md,
@@ -18,6 +18,8 @@ const Card = ({ children, style, className, gradient = false, onClick }) => {
       className={`card ${className || ''} fade-in`}
       style={cardStyle}
       onClick={onClick}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
     >
       {children}
     </div>

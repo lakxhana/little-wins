@@ -74,7 +74,7 @@ const MotivationalQuote = () => {
   return (
     <Card gradient>
       <div style={headerStyle}>
-        <div style={titleStyle}>✨ Your Daily Motivation</div>
+        <div style={titleStyle}>✨ Hey! Kind reminder 💙</div>
         <button
           style={refreshButtonStyle}
           onClick={refreshQuote}
