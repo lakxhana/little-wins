@@ -1,11 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Card from '../common/Card';
-import Button from '../common/Button';
 import { theme } from '../../styles/theme';
 
 const MoodStatus = ({ taskFeeling, energyLevel, onUpdateTaskFeeling, onUpdateEnergyLevel }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState('right');
+  const [activeDropdown, setActiveDropdown] = useState(null); // 'feeling' or 'energy'
   const dropdownRef = useRef(null);
   const buttonRef = useRef(null);
 
@@ -31,17 +31,18 @@ const MoodStatus = ({ taskFeeling, energyLevel, onUpdateTaskFeeling, onUpdateEne
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsDropdownOpen(false);
+        setActiveDropdown(null);
       }
     };
 
-    if (isDropdownOpen) {
+    if (activeDropdown) {
       document.addEventListener('mousedown', handleClickOutside);
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isDropdownOpen]);
+  }, [activeDropdown]);
 
   const feelingOptions = [
     { value: 'overwhelmed', label: '😰 Feeling Overwhelmed', desc: 'I need help managing the load' },
@@ -65,37 +66,75 @@ const MoodStatus = ({ taskFeeling, energyLevel, onUpdateTaskFeeling, onUpdateEne
     high: '🚀 High Energy',
   };
 
+  const handleFeelingClick = () => {
+    setActiveDropdown(activeDropdown === 'feeling' ? null : 'feeling');
+    setIsDropdownOpen(activeDropdown !== 'feeling');
+  };
+
+  const handleEnergyClick = () => {
+    setActiveDropdown(activeDropdown === 'energy' ? null : 'energy');
+    setIsDropdownOpen(activeDropdown !== 'energy');
+  };
+
   const handleUpdateFeeling = (value) => {
     onUpdateTaskFeeling(value);
     setIsDropdownOpen(false);
+    setActiveDropdown(null);
   };
 
   const handleUpdateEnergy = (value) => {
     onUpdateEnergyLevel(value);
     setIsDropdownOpen(false);
+    setActiveDropdown(null);
   };
 
   const containerStyle = {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gap: theme.spacing.md,
   };
 
-  const statusStyle = {
-    flex: 1,
+  const statusCardStyle = {
+    position: 'relative',
+    padding: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+    backgroundColor: '#F9FAFB',
+    border: `1px solid #E5E7EB`,
+    cursor: 'pointer',
+    transition: 'all 0.2s ease-in-out',
+  };
+
+  const statusCardHoverStyle = {
+    backgroundColor: '#F3F4F6',
+    borderColor: theme.colors.primaryBlue,
+    transform: 'translateY(-1px)',
+    boxShadow: theme.shadows.sm,
   };
 
   const labelStyle = {
-    fontSize: '14px',
+    fontSize: '11px',
     color: theme.colors.primaryText,
-    opacity: 0.7,
+    opacity: 0.6,
     marginBottom: theme.spacing.xs,
+    fontWeight: '500',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px',
   };
 
   const valueStyle = {
-    fontSize: '16px',
+    fontSize: '15px',
     fontWeight: '600',
-    color: theme.colors.primaryBlue,
+    color: theme.colors.primaryText,
+    lineHeight: '1.4',
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing.xs,
+  };
+
+  const editIconStyle = {
+    fontSize: '12px',
+    opacity: 0.5,
+    transition: 'opacity 0.2s ease-in-out',
   };
 
   const dropdownContainerStyle = {
@@ -105,38 +144,39 @@ const MoodStatus = ({ taskFeeling, energyLevel, onUpdateTaskFeeling, onUpdateEne
   const getDropdownStyle = () => {
     const baseStyle = {
       position: 'absolute',
-      top: 0,
+      top: '100%',
+      marginTop: theme.spacing.sm,
       background: theme.colors.white,
-      borderRadius: theme.borderRadius.md,
-      boxShadow: theme.shadows.lg,
-      padding: theme.spacing.md,
+      borderRadius: theme.borderRadius.lg,
+      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
+      padding: theme.spacing.lg,
       zIndex: 1000,
-      minWidth: '300px',
-      maxHeight: '400px',
+      minWidth: '320px',
+      maxHeight: '500px',
       overflowY: 'auto',
+      border: `1px solid #E5E7EB`,
     };
 
     if (dropdownPosition === 'left') {
       return {
         ...baseStyle,
-        right: '100%',
-        marginRight: theme.spacing.md,
+        right: 0,
       };
     } else {
       return {
         ...baseStyle,
-        left: '100%',
-        marginLeft: theme.spacing.md,
+        left: 0,
       };
     }
   };
 
   const sectionTitleStyle = {
-    fontSize: '14px',
-    fontWeight: '600',
+    fontSize: '15px',
+    fontWeight: '700',
     color: theme.colors.primaryText,
-    marginBottom: theme.spacing.sm,
-    marginTop: theme.spacing.md,
+    marginBottom: theme.spacing.md,
+    marginTop: theme.spacing.lg,
+    letterSpacing: '0.3px',
   };
 
   const firstSectionTitleStyle = {
@@ -145,74 +185,168 @@ const MoodStatus = ({ taskFeeling, energyLevel, onUpdateTaskFeeling, onUpdateEne
   };
 
   const optionStyle = (isSelected) => ({
-    padding: theme.spacing.sm,
-    borderRadius: theme.borderRadius.sm,
+    padding: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
     cursor: 'pointer',
-    marginBottom: theme.spacing.xs,
-    background: isSelected ? theme.colors.lightBlue : 'transparent',
-    transition: theme.transitions.fast,
+    marginBottom: theme.spacing.sm,
+    background: isSelected ? '#E0F2FE' : theme.colors.white,
+    border: isSelected ? `2px solid ${theme.colors.primaryBlue}` : '2px solid #F3F4F6',
+    transition: 'all 0.2s ease-in-out',
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: theme.spacing.md,
   });
 
+  const optionEmojiStyle = {
+    fontSize: '24px',
+    lineHeight: '1',
+    flexShrink: 0,
+  };
+
+  const optionContentStyle = {
+    flex: 1,
+  };
+
   const optionLabelStyle = {
-    fontSize: '14px',
-    fontWeight: '500',
+    fontSize: '15px',
+    fontWeight: '600',
     color: theme.colors.primaryText,
+    marginBottom: theme.spacing.xs,
+    lineHeight: '1.4',
   };
 
   const optionDescStyle = {
-    fontSize: '12px',
+    fontSize: '13px',
     color: theme.colors.primaryText,
-    opacity: 0.7,
-    marginTop: '2px',
+    opacity: 0.65,
+    lineHeight: '1.4',
   };
 
   return (
     <Card>
       <div style={containerStyle}>
-        <div style={statusStyle}>
-          <div style={labelStyle}>Today I need help with</div>
-          <div style={valueStyle}>{feelingLabels[taskFeeling] || 'Not set'}</div>
-        </div>
-        <div style={statusStyle}>
-          <div style={labelStyle}>My energy level is</div>
-          <div style={valueStyle}>{energyLabels[energyLevel] || 'Not set'}</div>
-        </div>
-        <div style={dropdownContainerStyle} ref={dropdownRef}>
-          <div ref={buttonRef}>
-            <Button
-              variant="outline"
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              style={{ padding: `${theme.spacing.sm} ${theme.spacing.md}`, fontSize: '14px' }}
-            >
-              It has changed
-            </Button>
+        <div 
+          style={dropdownContainerStyle} 
+          ref={activeDropdown === 'feeling' ? dropdownRef : null}
+        >
+          <div
+            style={statusCardStyle}
+            onClick={handleFeelingClick}
+            onMouseEnter={(e) => {
+              Object.assign(e.currentTarget.style, statusCardHoverStyle);
+              e.currentTarget.querySelector('[data-edit-icon]').style.opacity = '1';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#F9FAFB';
+              e.currentTarget.style.borderColor = '#E5E7EB';
+              e.currentTarget.style.transform = 'none';
+              e.currentTarget.style.boxShadow = 'none';
+              e.currentTarget.querySelector('[data-edit-icon]').style.opacity = '0.5';
+            }}
+          >
+            <div style={labelStyle}>Today I need help with</div>
+            <div style={valueStyle}>
+              {feelingLabels[taskFeeling] || 'Not set'}
+              <span data-edit-icon style={editIconStyle}>✏️</span>
+            </div>
           </div>
 
-          {isDropdownOpen && (
+          {activeDropdown === 'feeling' && (
             <div style={getDropdownStyle()}>
               <div style={firstSectionTitleStyle}>Update Task Feeling</div>
-              {feelingOptions.map((option) => (
-                <div
-                  key={option.value}
-                  style={optionStyle(taskFeeling === option.value)}
-                  onClick={() => handleUpdateFeeling(option.value)}
-                >
-                  <div style={optionLabelStyle}>{option.label}</div>
-                  <div style={optionDescStyle}>{option.desc}</div>
-                </div>
-              ))}
+              {feelingOptions.map((option) => {
+                const isSelected = taskFeeling === option.value;
+                const emoji = option.label.split(' ')[0];
+                const label = option.label.split(' ').slice(1).join(' ');
+                return (
+                  <div
+                    key={option.value}
+                    style={optionStyle(isSelected)}
+                    onClick={() => handleUpdateFeeling(option.value)}
+                    onMouseEnter={(e) => {
+                      if (!isSelected) {
+                        e.currentTarget.style.background = '#F9FAFB';
+                        e.currentTarget.style.borderColor = '#E5E7EB';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isSelected) {
+                        e.currentTarget.style.background = theme.colors.white;
+                        e.currentTarget.style.borderColor = '#F3F4F6';
+                      }
+                    }}
+                  >
+                    <span style={optionEmojiStyle}>{emoji}</span>
+                    <div style={optionContentStyle}>
+                      <div style={optionLabelStyle}>{label}</div>
+                      <div style={optionDescStyle}>{option.desc}</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
 
-              <div style={sectionTitleStyle}>Update Energy Level</div>
-              {energyOptions.map((option) => (
-                <div
-                  key={option.value}
-                  style={optionStyle(energyLevel === option.value)}
-                  onClick={() => handleUpdateEnergy(option.value)}
-                >
-                  <div style={optionLabelStyle}>{option.label}</div>
-                  <div style={optionDescStyle}>{option.desc}</div>
-                </div>
-              ))}
+        <div 
+          style={dropdownContainerStyle} 
+          ref={activeDropdown === 'energy' ? dropdownRef : null}
+        >
+          <div
+            style={statusCardStyle}
+            onClick={handleEnergyClick}
+            onMouseEnter={(e) => {
+              Object.assign(e.currentTarget.style, statusCardHoverStyle);
+              e.currentTarget.querySelector('[data-edit-icon]').style.opacity = '1';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#F9FAFB';
+              e.currentTarget.style.borderColor = '#E5E7EB';
+              e.currentTarget.style.transform = 'none';
+              e.currentTarget.style.boxShadow = 'none';
+              e.currentTarget.querySelector('[data-edit-icon]').style.opacity = '0.5';
+            }}
+          >
+            <div style={labelStyle}>My energy level is</div>
+            <div style={valueStyle}>
+              {energyLabels[energyLevel] || 'Not set'}
+              <span data-edit-icon style={editIconStyle}>✏️</span>
+            </div>
+          </div>
+
+          {activeDropdown === 'energy' && (
+            <div style={getDropdownStyle()}>
+              <div style={firstSectionTitleStyle}>Update Energy Level</div>
+              {energyOptions.map((option) => {
+                const isSelected = energyLevel === option.value;
+                const emoji = option.label.split(' ')[0];
+                const label = option.label.split(' ').slice(1).join(' ');
+                return (
+                  <div
+                    key={option.value}
+                    style={optionStyle(isSelected)}
+                    onClick={() => handleUpdateEnergy(option.value)}
+                    onMouseEnter={(e) => {
+                      if (!isSelected) {
+                        e.currentTarget.style.background = '#F9FAFB';
+                        e.currentTarget.style.borderColor = '#E5E7EB';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isSelected) {
+                        e.currentTarget.style.background = theme.colors.white;
+                        e.currentTarget.style.borderColor = '#F3F4F6';
+                      }
+                    }}
+                  >
+                    <span style={optionEmojiStyle}>{emoji}</span>
+                    <div style={optionContentStyle}>
+                      <div style={optionLabelStyle}>{label}</div>
+                      <div style={optionDescStyle}>{option.desc}</div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>

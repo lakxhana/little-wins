@@ -5,6 +5,7 @@ import MoodStatus from './MoodStatus';
 import TodoList from './TodoList';
 import FocusTools from './FocusTools';
 import TaskInput from './TaskInput';
+import SnoozedTasks from './SnoozedTasks';
 import Card from '../common/Card';
 import { theme } from '../../styles/theme';
 
@@ -82,6 +83,73 @@ const Dashboard = ({ taskFeeling, energyLevel, onUpdateTaskFeeling, onUpdateEner
     setTasks([...reorderedTasks, ...remainingTasks]);
   };
 
+  const handleSwapTask = () => {
+    // Move current task to the end of the list
+    const incompleteTasks = tasks.filter(task => !task.completed);
+    if (incompleteTasks.length > 1) {
+      const currentTask = incompleteTasks[0];
+      const otherTasks = incompleteTasks.slice(1);
+      const completedTasks = tasks.filter(task => task.completed);
+      const newOrder = [...otherTasks, currentTask, ...completedTasks].map(t => t.id);
+      handleReorderTasks(newOrder);
+    }
+  };
+
+  const handleSnoozeTask = (taskId, minutes = 60) => {
+    // Snooze task for specified minutes (default 1 hour)
+    const snoozedUntil = new Date(Date.now() + minutes * 60 * 1000).toISOString();
+    setTasks(tasks.map(task =>
+      task.id === taskId ? { ...task, snoozedUntil } : task
+    ));
+  };
+
+  const handleWakeUpTask = (taskId) => {
+    // Remove snooze by clearing snoozedUntil
+    setTasks(tasks.map(task =>
+      task.id === taskId ? { ...task, snoozedUntil: null } : task
+    ));
+  };
+
+  // Auto-wake snoozed tasks when their time expires
+  useEffect(() => {
+    const checkSnoozedTasks = () => {
+      const now = Date.now();
+      setTasks(prevTasks => prevTasks.map(task => {
+        if (task.snoozedUntil) {
+          const snoozedUntil = new Date(task.snoozedUntil).getTime();
+          if (snoozedUntil <= now) {
+            // Auto-wake if time has passed
+            return { ...task, snoozedUntil: null };
+          }
+        }
+        return task;
+      }));
+    };
+
+    // Check immediately
+    checkSnoozedTasks();
+    
+    // Check every minute
+    const interval = setInterval(checkSnoozedTasks, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Filter tasks into active and snoozed
+  const now = Date.now();
+  const activeTasks = tasks.filter(task => {
+    if (task.completed) return false;
+    if (!task.snoozedUntil) return true;
+    const snoozedUntil = new Date(task.snoozedUntil).getTime();
+    return snoozedUntil <= now; // Auto-wake if time has passed
+  });
+
+  const snoozedTasks = tasks.filter(task => {
+    if (task.completed) return false;
+    if (!task.snoozedUntil) return false;
+    const snoozedUntil = new Date(task.snoozedUntil).getTime();
+    return snoozedUntil > now; // Still snoozed
+  });
+
   // Simple complexity assessment - will be replaced with AI later
   const assessComplexity = (taskText, energyLevel) => {
     const wordCount = taskText.split(' ').length;
@@ -112,13 +180,27 @@ const Dashboard = ({ taskFeeling, energyLevel, onUpdateTaskFeeling, onUpdateEner
           onUpdateTaskFeeling={onUpdateTaskFeeling}
           onUpdateEnergyLevel={onUpdateEnergyLevel}
         />
+        <SnoozedTasks
+          snoozedTasks={snoozedTasks}
+          onWakeUp={handleWakeUpTask}
+        />
         <TodoList
-          tasks={tasks}
+          tasks={activeTasks}
           onToggleTask={handleToggleTask}
           onAddTask={handleAddTask}
           onDeleteTask={handleDeleteTask}
           onReorderTasks={handleReorderTasks}
+          onSnooze={handleSnoozeTask}
         />
+        {/* Show "Add New Task" only when there are no active tasks */}
+        {activeTasks.length === 0 && (
+          <Card>
+            <div style={{ fontSize: 20, fontWeight: 600, marginBottom: theme.spacing.md }}>
+              ➕ Add New Task
+            </div>
+            <TaskInput onAddTask={handleAddTask} energyLevel={energyLevel} />
+          </Card>
+        )}
         <FocusTools />
       </div>
     </div>

@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Card from '../common/Card';
-import TaskInput from './TaskInput';
+import OverwhelmedModal from './OverwhelmedModal';
 import { theme } from '../../styles/theme';
 
-const TodoList = ({ tasks, onToggleTask, onAddTask, onDeleteTask, onReorderTasks }) => {
+const TodoList = ({ tasks, onToggleTask, onAddTask, onDeleteTask, onReorderTasks, onSnooze }) => {
+  const [isOverwhelmedModalOpen, setIsOverwhelmedModalOpen] = useState(false);
   const incompleteTasks = tasks.filter(task => !task.completed);
   const currentTask = incompleteTasks.length > 0 ? incompleteTasks[0] : null;
 
@@ -23,12 +24,13 @@ const TodoList = ({ tasks, onToggleTask, onAddTask, onDeleteTask, onReorderTasks
   const handleDone = () => currentTask && onToggleTask(currentTask.id);
 
   const handleSnooze = () => {
-    if (currentTask && onReorderTasks) {
-      const otherIncomplete = incompleteTasks.filter(t => t.id !== currentTask.id);
-      const completedTasks = tasks.filter(t => t.completed);
-      const newOrder = [...otherIncomplete, currentTask, ...completedTasks].map(t => t.id);
-      onReorderTasks(newOrder);
+    if (currentTask && onSnooze) {
+      onSnooze(currentTask.id, 60); // Default to 1 hour
     }
+  };
+
+  const handleTryAnyway = () => {
+    // Just close the modal, user wants to continue
   };
 
   const taskInfo = currentTask ? getTaskInfo(currentTask.complexity) : null;
@@ -78,19 +80,31 @@ const TodoList = ({ tasks, onToggleTask, onAddTask, onDeleteTask, onReorderTasks
             ✓ Done
           </button>
 
-          {/* Snooze */}
+          {/* I feel overwhelmed button */}
           <button
             style={{
               marginTop: theme.spacing.md,
               width: "100%",
               padding: theme.spacing.md,
-              border: `2px solid ${theme.colors.lightBlue}`,
+              backgroundColor: '#F0F4FF',
+              border: `2px solid ${theme.colors.primaryBlue}`,
               borderRadius: theme.borderRadius.md,
+              fontSize: 16,
+              fontWeight: 500,
+              color: theme.colors.primaryText,
+              cursor: 'pointer',
             }}
-            onClick={handleSnooze}
+            onClick={() => setIsOverwhelmedModalOpen(true)}
           >
-            🕐 Snooze
+            💗 I feel overwhelmed
           </button>
+
+          <OverwhelmedModal
+            isOpen={isOverwhelmedModalOpen}
+            onClose={() => setIsOverwhelmedModalOpen(false)}
+            onSnooze={handleSnooze}
+            onTryAnyway={handleTryAnyway}
+          />
         </Card>
       )}
 
@@ -100,16 +114,6 @@ const TodoList = ({ tasks, onToggleTask, onAddTask, onDeleteTask, onReorderTasks
           <div style={emptyStateStyle}>
             🎉 All tasks completed! Great job!
           </div>
-        </Card>
-      )}
-
-      {/* SECTION: ADD NEW TASK */}
-      {allTasksCompleted && (
-        <Card>
-          <div style={{ fontSize: 20, fontWeight: 600, marginBottom: theme.spacing.md }}>
-            ➕ Add New Task
-          </div>
-          <TaskInput onAddTask={onAddTask} />
         </Card>
       )}
     </div>
