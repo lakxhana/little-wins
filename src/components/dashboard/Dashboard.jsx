@@ -24,28 +24,33 @@ const Dashboard = ({ taskFeeling, energyLevel, onUpdateTaskFeeling, onUpdateEner
           // Clean up any invalid or expired snoozed tasks
           const now = Date.now();
           const cleanedTasks = parsed.map(task => {
-            // If task has snoozedUntil, validate it
+            // Remove snoozedUntil from all tasks on load to clear any hardcoded/test data
+            // Users can snooze tasks again if needed
             if (task.snoozedUntil) {
-              try {
-                const snoozedUntil = new Date(task.snoozedUntil).getTime();
-                // If snooze time has passed or is invalid, clear it
-                if (isNaN(snoozedUntil) || snoozedUntil <= now) {
-                  const { snoozedUntil: _, ...taskWithoutSnooze } = task;
-                  return taskWithoutSnooze;
-                }
-              } catch (e) {
-                // Invalid date, remove snoozedUntil
-                const { snoozedUntil: _, ...taskWithoutSnooze } = task;
-                return taskWithoutSnooze;
-              }
+              const { snoozedUntil: _, ...taskWithoutSnooze } = task;
+              return taskWithoutSnooze;
             }
             return task;
           });
+          
+          // Save cleaned tasks back to localStorage to remove expired snoozes permanently
+          const hasChanges = cleanedTasks.length !== parsed.length || 
+            cleanedTasks.some((task, index) => {
+              const original = parsed[index];
+              return original && original.snoozedUntil && !task.snoozedUntil;
+            });
+          
+          if (hasChanges) {
+            localStorage.setItem('tasks', JSON.stringify(cleanedTasks));
+          }
+          
           setTasks(cleanedTasks);
         }
       }
     } catch (error) {
       console.error('Failed to load tasks from localStorage:', error);
+      // Clear corrupted data
+      localStorage.removeItem('tasks');
     } finally {
       setHasLoaded(true);
     }
