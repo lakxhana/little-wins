@@ -8,8 +8,9 @@
 
 body {
   font-family: 'Roboto', sans-serif;
-  background-color: #FAEBD7;
-  color: #263238;
+  background: linear-gradient(180deg, #E3F2FD 0%, #E8EAF6 50%, #FFF3E0 100%);
+  background-attachment: fixed;
+  color: #2C3E50;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   min-height: 100vh;

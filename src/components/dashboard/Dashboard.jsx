@@ -185,7 +185,8 @@ const Dashboard = ({ taskFeeling, energyLevel, onUpdateTaskFeeling, onUpdateEner
 
   const containerStyle = {
     minHeight: '100vh',
-    background: theme.colors.background,
+    background: 'linear-gradient(180deg, #E3F2FD 0%, #E8EAF6 50%, #FFF3E0 100%)',
+    backgroundAttachment: 'fixed',
   };
 
   const contentStyle = {

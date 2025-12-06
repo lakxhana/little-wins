@@ -221,14 +221,14 @@ const TaskInput = ({ onAddTask, energyLevel }) => {
     flex: 1,
     padding: theme.spacing.md,
     borderRadius: theme.borderRadius.md,
-    border: `2px solid ${theme.colors.lightBlue}`,
+    border: `2px solid ${theme.colors.primaryBlue}`,
     fontSize: '16px',
     outline: 'none',
     transition: theme.transitions.fast,
   };
 
   const dropdownCardStyle = {
-    background: theme.gradient, // Same gradient as MotivationalQuote
+    background: theme.colors.white,
     padding: theme.spacing.md,
     marginTop: theme.spacing.sm,
     marginBottom: theme.spacing.sm, // Add spacing between cards
@@ -236,7 +236,7 @@ const TaskInput = ({ onAddTask, energyLevel }) => {
   };
 
   const tipsCardStyle = {
-    backgroundColor: '#E0F2FE', // Light blue background
+    backgroundColor: theme.colors.white,
     padding: theme.spacing.md,
     marginTop: 0,
     marginBottom: 0, // Override Card's default marginBottom
@@ -351,7 +351,7 @@ const TaskInput = ({ onAddTask, energyLevel }) => {
     padding: theme.spacing.md,
     marginBottom: theme.spacing.sm,
     backgroundColor: 'white',
-    border: `1px solid ${theme.colors.lightBlue}`,
+    border: `1px solid ${theme.colors.primaryBlue}`,
     borderRadius: theme.borderRadius.sm,
     cursor: 'pointer',
     transition: theme.transitions.fast,
@@ -390,7 +390,7 @@ const TaskInput = ({ onAddTask, energyLevel }) => {
             style={inputStyle}
             disabled={isAnalyzing}
             onFocus={(e) => e.target.style.borderColor = theme.colors.primaryBlue}
-            onBlur={(e) => e.target.style.borderColor = theme.colors.lightBlue}
+            onBlur={(e) => e.target.style.borderColor = theme.colors.primaryBlue}
           />
           <Button
             type="submit"
@@ -505,7 +505,7 @@ const TaskInput = ({ onAddTask, energyLevel }) => {
                       }}
                       onMouseLeave={(e) => {
                         e.currentTarget.style.backgroundColor = stepItem.isBreak ? '#FFF7ED' : 'white';
-                        e.currentTarget.style.borderColor = stepItem.isBreak ? '#FCD34D' : theme.colors.lightBlue;
+                        e.currentTarget.style.borderColor = stepItem.isBreak ? '#FCD34D' : theme.colors.primaryBlue;
                       }}
                     >
                       <div style={stepNumberStyle}>

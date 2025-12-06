@@ -185,48 +185,50 @@ export const breakDownTaskWithGroq = async (
 
   const energyContext = energyLevel ? `The user's current energy level is: ${energyLevel}.` : '';
   
-  const prompt = `Break down the following task into smaller, manageable steps. This is for someone with ADHD/neurodivergent needs, so keep it simple and avoid overwhelm.
+  const prompt = `Break down the following task into 3-4 logical, meaningful work steps plus 1-2 breaks (5 steps total maximum). This is for someone with ADHD/neurodivergent needs.
 
 Task: "${taskText}"
 ${energyContext}
 
-Break this task down into EXACTLY 5 steps maximum (including breaks). This is critical - neurodivergent people get overwhelmed with too many tasks. Include 1-2 strategic breaks placed between work steps. Breaks should be short (3-5 minutes) and restorative.
-
-CRITICAL: 
-- Maximum 5 steps total (work steps + breaks combined)
-- Each step must be a SINGLE, atomic action
-- If a step mentions multiple things (like "planning accommodations, transportation, and activities"), break it into separate steps
-- Each step should do ONE thing only
-- Keep it concise - 5 steps is the limit to prevent overwhelm
+IMPORTANT RULES:
+- Focus on the ACTUAL WORK that needs to be done, NOT preparation steps
+- DO NOT include steps like "put on clothes", "get water", "gather supplies" - these are not part of the task
+- Break down into logical areas/sections (e.g., for "clean my house" → "Clean kitchen", "Clean bathroom", "Clean living room")
+- Each step should be a meaningful chunk of work, not micro-actions
+- Maximum 5 steps total (3-4 work steps + 1-2 breaks)
+- Include 1-2 breaks strategically placed between work steps
 
 Respond with ONLY a valid JSON array in this exact format (no markdown, no code blocks, just the raw JSON):
 [
-  {"step": "First actionable step", "isBreak": false},
-  {"step": "Second actionable step", "isBreak": false},
+  {"step": "First meaningful work step", "isBreak": false},
   {"step": "BREAK - Walk around for 5 mins", "isBreak": true},
-  {"step": "Third actionable step", "isBreak": false},
+  {"step": "Second meaningful work step", "isBreak": false},
   ...
 ]
 
 Guidelines:
-- MAXIMUM 5 steps total (work steps + breaks combined) - this is critical for neurodivergent users
-- Steps must be ATOMIC - one action per step. Never combine multiple tasks in one step.
-- If you see phrases like "planning X, Y, and Z" or "organize A and B", split into separate steps.
-- Steps should be very specific and actionable (e.g., "Fill out basic info ONLY (15 mins)" not "Fill out form")
+- MAXIMUM 5 steps total (work steps + breaks combined)
+- Steps should be LOGICAL and MEANINGFUL, not overly granular
+- For cleaning tasks: break by room/area (e.g., "Clean kitchen", "Clean bathroom")
+- For work tasks: break by logical sections (e.g., "Research phase", "Writing phase", "Review phase")
+- For application tasks: break by form sections (e.g., "Personal info section", "Work history section")
+- DO NOT include preparation steps like getting ready, gathering supplies, etc.
 - Include 1-2 breaks strategically placed (every 2-3 work steps)
 - Break steps should be restorative: "BREAK - Walk around for 5 mins", "BREAK - Snack + stretch", "BREAK - Deep breath and reset"
-- Make steps small enough to feel achievable
-- Use time estimates in parentheses when helpful (e.g., "Write cover letter draft (use template!) (20 mins)")
-- Prioritize the most important steps - if the task has many parts, focus on the 3-4 most critical work steps plus 1-2 breaks
 
-Examples of GOOD steps:
-- "Find application link and save it" (single action)
-- "Gather documents (CV, transcript, portfolio)" (one gathering action)
-- "Fill out basic info ONLY (15 mins)" (one form section)
+Examples of GOOD breakdowns:
+Task: "clean my house"
+→ ["Clean kitchen", "Clean bathroom", "BREAK - Walk around for 5 mins", "Clean living room", "Clean bedroom"]
 
-Examples of BAD steps (split these):
-- "Plan accommodations, transportation, and activities" → Split into: "Research accommodations", "Book transportation", "Plan activities"
-- "Organize files and clean desk" → Split into: "Organize files", "Clean desk"
+Task: "apply for a job"
+→ ["Research company and role", "Update resume", "BREAK - Stretch and reset", "Write cover letter", "Submit application"]
+
+Task: "organize my files"
+→ ["Sort documents by category", "BREAK - Walk around for 5 mins", "File important documents", "Shred or recycle old papers"]
+
+Examples of BAD breakdowns (too granular):
+Task: "clean my house"
+→ ["Put on comfortable clothes", "Get a glass of water", "Go to kitchen", "Open trash can"] ❌ TOO GRANULAR
 
 Respond with ONLY the JSON array, nothing else.`;
 
@@ -266,38 +268,9 @@ Respond with ONLY the JSON array, nothing else.`;
       steps = [...workSteps.slice(0, maxWorkSteps), ...breaks.slice(0, 2)].slice(0, 5);
     }
 
-    // Use AI to check and break down any steps that contain multiple sub-tasks
-    const expandedSteps: TaskBreakdownStep[] = [];
-    for (const stepItem of steps) {
-      if (stepItem.isBreak) {
-        expandedSteps.push(stepItem);
-        continue;
-      }
-
-      // Use AI to determine if this step needs further breakdown
-      try {
-        const needsBreakdown = await checkIfStepNeedsBreakdown(stepItem.step, apiKey);
-        if (needsBreakdown) {
-          const subSteps = await breakDownStepWithGroq(stepItem.step, apiKey);
-          expandedSteps.push(...subSteps);
-        } else {
-          expandedSteps.push(stepItem);
-        }
-      } catch (error) {
-        console.error('Failed to check/break down step:', error);
-        // If breakdown fails, keep original step
-        expandedSteps.push(stepItem);
-      }
-    }
-    
-    // Final limit: Maximum 5 steps total for neurodivergent users (to prevent overwhelm)
-    // Preserve original order when limiting
-    if (expandedSteps.length > 5) {
-      // Simply take the first 5 steps to preserve order
-      return expandedSteps.slice(0, 5);
-    }
-    
-    return expandedSteps;
+    // Return steps directly without secondary breakdown to avoid over-granularization
+    // The initial prompt should produce appropriately-sized steps
+    return steps;
   } catch (error) {
     console.error('Task breakdown error:', error);
     throw error;

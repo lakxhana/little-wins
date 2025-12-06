@@ -131,11 +131,6 @@ const MoodStatus = ({ taskFeeling, energyLevel, onUpdateTaskFeeling, onUpdateEne
     gap: theme.spacing.xs,
   };
 
-  const editIconStyle = {
-    fontSize: '12px',
-    opacity: 0.5,
-    transition: 'opacity 0.2s ease-in-out',
-  };
 
   const dropdownContainerStyle = {
     position: 'relative',
@@ -234,20 +229,17 @@ const MoodStatus = ({ taskFeeling, energyLevel, onUpdateTaskFeeling, onUpdateEne
             onClick={handleFeelingClick}
             onMouseEnter={(e) => {
               Object.assign(e.currentTarget.style, statusCardHoverStyle);
-              e.currentTarget.querySelector('[data-edit-icon]').style.opacity = '1';
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.backgroundColor = '#F9FAFB';
               e.currentTarget.style.borderColor = '#E5E7EB';
               e.currentTarget.style.transform = 'none';
               e.currentTarget.style.boxShadow = 'none';
-              e.currentTarget.querySelector('[data-edit-icon]').style.opacity = '0.5';
             }}
           >
             <div style={labelStyle}>Today I need help with</div>
             <div style={valueStyle}>
               {feelingLabels[taskFeeling] || 'Not set'}
-              <span data-edit-icon style={editIconStyle}>✏️</span>
             </div>
           </div>
 
@@ -297,20 +289,17 @@ const MoodStatus = ({ taskFeeling, energyLevel, onUpdateTaskFeeling, onUpdateEne
             onClick={handleEnergyClick}
             onMouseEnter={(e) => {
               Object.assign(e.currentTarget.style, statusCardHoverStyle);
-              e.currentTarget.querySelector('[data-edit-icon]').style.opacity = '1';
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.backgroundColor = '#F9FAFB';
               e.currentTarget.style.borderColor = '#E5E7EB';
               e.currentTarget.style.transform = 'none';
               e.currentTarget.style.boxShadow = 'none';
-              e.currentTarget.querySelector('[data-edit-icon]').style.opacity = '0.5';
             }}
           >
             <div style={labelStyle}>My energy level is</div>
             <div style={valueStyle}>
               {energyLabels[energyLevel] || 'Not set'}
-              <span data-edit-icon style={editIconStyle}>✏️</span>
             </div>
           </div>
 

@@ -97,10 +97,11 @@ const FocusTools = () => {
   };
 
   const sectionTitleStyle = {
-    fontSize: '16px',
+    fontSize: '17px',
     fontWeight: '600',
     color: theme.colors.primaryText,
-    marginBottom: theme.spacing.sm,
+    marginBottom: theme.spacing.md,
+    letterSpacing: '0.2px',
   };
 
   const timerDisplayStyle = {
@@ -121,49 +122,59 @@ const FocusTools = () => {
 
   const inputStyle = {
     width: '100%',
-    padding: theme.spacing.md,
-    borderRadius: theme.borderRadius.sm,
-    border: `2px solid ${theme.colors.lightBlue}`,
-    fontSize: '14px',
+    padding: `${theme.spacing.md} ${theme.spacing.lg}`,
+    borderRadius: theme.borderRadius.md,
+    border: `1px solid ${theme.colors.borderGray}`,
+    fontSize: '15px',
     fontFamily: theme.fonts.primary,
+    color: theme.colors.primaryText,
+    backgroundColor: theme.colors.white,
     outline: 'none',
-    transition: theme.transitions.fast,
+    transition: theme.transitions.normal,
   };
 
   const listStyle = {
     listStyle: 'none',
     padding: 0,
-    margin: `${theme.spacing.md} 0`,
+    margin: `${theme.spacing.lg} 0 0 0`,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing.sm,
   };
 
   const listItemStyle = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: theme.spacing.md,
-    marginBottom: theme.spacing.sm,
-    background: theme.colors.background,
-    borderRadius: theme.borderRadius.sm,
-    border: `1px solid ${theme.colors.lightBlue}`,
+    padding: `${theme.spacing.md} ${theme.spacing.lg}`,
+    backgroundColor: theme.colors.white,
+    borderRadius: theme.borderRadius.md,
+    border: `1px solid ${theme.colors.borderGray}`,
+    boxShadow: theme.shadows.sm,
+    transition: theme.transitions.normal,
   };
 
   const itemTextStyle = {
     flex: 1,
-    fontSize: '14px',
+    fontSize: '15px',
+    fontWeight: '400',
     color: theme.colors.primaryText,
     marginRight: theme.spacing.md,
+    lineHeight: '1.5',
+    wordBreak: 'break-word',
   };
 
   const formStyle = {
     display: 'flex',
     gap: theme.spacing.sm,
-    marginBottom: theme.spacing.md,
+    marginBottom: theme.spacing.lg,
   };
 
   const dividerStyle = {
-    height: '2px',
-    background: theme.colors.lightBlue,
+    height: '1px',
+    background: theme.colors.borderGray,
     margin: `${theme.spacing.xl} 0`,
+    border: 'none',
   };
 
   return (
@@ -200,8 +211,14 @@ const FocusTools = () => {
             onChange={(e) => setNewItemText(e.target.value)}
             placeholder="Add a thought or task..."
             style={inputStyle}
-            onFocus={(e) => e.target.style.borderColor = theme.colors.primaryBlue}
-            onBlur={(e) => e.target.style.borderColor = theme.colors.lightBlue}
+            onFocus={(e) => {
+              e.target.style.borderColor = theme.colors.primaryBlue;
+              e.target.style.boxShadow = `0 0 0 3px ${theme.colors.primaryBlueLight}33`;
+            }}
+            onBlur={(e) => {
+              e.target.style.borderColor = theme.colors.borderGray;
+              e.target.style.boxShadow = 'none';
+            }}
           />
           <Button
             type="submit"
@@ -213,15 +230,32 @@ const FocusTools = () => {
         </form>
         {brainDumpItems.length > 0 && (
           <ul style={listStyle}>
-            {brainDumpItems.map((item) => (
-              <li key={item.id} style={listItemStyle}>
+            {brainDumpItems.map((item, index) => (
+              <li 
+                key={item.id} 
+                style={listItemStyle}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = theme.colors.primaryBlue;
+                  e.currentTarget.style.boxShadow = theme.shadows.md;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = theme.colors.borderGray;
+                  e.currentTarget.style.boxShadow = theme.shadows.sm;
+                }}
+              >
                 <span style={itemTextStyle}>{item.text}</span>
                 <Button
                   onClick={() => handleCompleteItem(item.id)}
                   variant="outline"
-                  style={{ padding: `${theme.spacing.xs} ${theme.spacing.sm}`, fontSize: '12px' }}
+                  style={{ 
+                    padding: `${theme.spacing.sm} ${theme.spacing.md}`, 
+                    fontSize: '13px',
+                    fontWeight: '500',
+                    minWidth: '80px',
+                    whiteSpace: 'nowrap',
+                  }}
                 >
-                  Complete
+                  ✓ Done
                 </Button>
               </li>
             ))}
