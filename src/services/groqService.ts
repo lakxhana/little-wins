@@ -386,3 +386,50 @@ Respond with ONLY the JSON array, nothing else.`;
   }
 };
 
+/**
+ * Generate a short, simple, and encouraging motivational quote for neurodivergent users
+ */
+export const generateMotivationalQuote = async (apiKey: string): Promise<string> => {
+  const prompt = `Generate a short, simple, and encouraging motivational quote for someone with ADHD or other neurodivergent conditions.
+
+CRITICAL REQUIREMENTS:
+- Keep it SHORT (maximum 12-15 words)
+- Keep it SIMPLE and straightforward
+- Make it encouraging and supportive
+- Avoid complex metaphors or abstract concepts
+- Use direct, clear language
+- Focus on progress, small wins, or self-compassion
+- Be warm and understanding
+
+Examples of GOOD quotes:
+- "Small steps forward are still progress. You've got this!"
+- "Every completed task is a victory, no matter how small."
+- "Your pace is perfect. Keep moving forward."
+- "Breaking things down isn't weakness, it's wisdom."
+- "Today's small win is tomorrow's foundation."
+- "You don't have to be perfect, just keep going."
+- "Rest is valid. You're doing enough."
+
+Examples of BAD quotes (too long or complex):
+- "In the journey of a thousand miles, the first step is the most important, and remember that every journey is unique to the individual traveler."
+- "Like a phoenix rising from the ashes, you too can transform your challenges into opportunities for growth."
+
+Respond with ONLY the quote text, no quotes, no explanation, just the quote itself.`;
+
+  try {
+    console.log('🤖 AI: Generating motivational quote with Groq AI...');
+    const response = await sendMessageToGroq(prompt, apiKey);
+    const quote = response.trim();
+    
+    // Remove any surrounding quotes if present
+    const cleanedQuote = quote.replace(/^["']|["']$/g, '');
+    
+    console.log('✅ AI: Motivational quote generated', { quote: cleanedQuote });
+    return cleanedQuote || "Small steps forward are still progress. You've got this!";
+  } catch (error) {
+    console.error('Failed to generate motivational quote:', error);
+    // Return a simple fallback
+    return "Small steps forward are still progress. You've got this!";
+  }
+};
+

@@ -1,43 +1,58 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Card from '../common/Card';
 import { theme } from '../../styles/theme';
+import { generateMotivationalQuote } from '../../services/groqService';
 
 const MotivationalQuote = () => {
-  // Placeholder quotes - will be replaced with AI-generated ones
-  const quotes = [
-    "Small steps forward are still progress. You've got this!",
-    "Every completed task is a victory, no matter how small.",
-    "Your pace is perfect. Keep moving forward.",
-    "Breaking things down isn't weakness, it's wisdom.",
-    "Today's small win is tomorrow's foundation.",
-  ];
-
-  const [currentQuote, setCurrentQuote] = useState(quotes[0]);
+  const [currentQuote, setCurrentQuote] = useState("Small steps forward are still progress. You've got this!");
   const [isLoading, setIsLoading] = useState(false);
-  const timeoutRef = useRef(null);
+  const abortControllerRef = useRef(null);
 
-  // Cleanup timeout on unmount
+  // Get API key from environment variable
+  const apiKey = process.env.REACT_APP_GROQ_API_KEY || '';
+
+  // Load initial quote on mount
+  useEffect(() => {
+    if (apiKey) {
+      loadQuote();
+    }
+  }, []);
+
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
       }
     };
   }, []);
 
-  const refreshQuote = () => {
-    setIsLoading(true);
-    // Clear any existing timeout
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
+  const loadQuote = async () => {
+    if (!apiKey) {
+      return;
     }
-    // Simulate AI call - replace with actual AI service later
-    timeoutRef.current = setTimeout(() => {
-      const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
-      setCurrentQuote(randomQuote);
+
+    setIsLoading(true);
+    
+    // Cancel previous request if still running
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    try {
+      const quote = await generateMotivationalQuote(apiKey);
+      setCurrentQuote(quote);
+    } catch (error) {
+      console.error('Failed to load motivational quote:', error);
+      // Keep the current quote or use fallback
+    } finally {
       setIsLoading(false);
-      timeoutRef.current = null;
-    }, 500);
+      abortControllerRef.current = null;
+    }
+  };
+
+  const refreshQuote = () => {
+    loadQuote();
   };
 
   const quoteStyle = {
