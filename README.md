@@ -120,14 +120,18 @@ docker-compose restart
 ```
 little-wins/
 ├── src/
-│   ├── App.jsx          # Main React component
-│   └── index.jsx        # React entry point
+│   ├── components/
+│   │   └── ChatInterface.tsx  # Main React component
+│   ├── services/
+│   │   └── groqService.ts     # Groq API service
+│   └── main.tsx               # React entry point
 ├── public/
-│   └── index.html       # HTML template
-├── Dockerfile           # Docker image configuration
-├── docker-compose.yml   # Docker Compose configuration
-├── package.json         # Node.js dependencies
-└── README.md           # This file
+│   └── index.html             # HTML template
+├── Dockerfile                 # Docker image configuration
+├── docker-compose.yml         # Docker Compose configuration
+├── tsconfig.json              # TypeScript configuration
+├── package.json               # Node.js dependencies
+└── README.md                  # This file
 ```
 
 ## Troubleshooting
@@ -172,8 +176,53 @@ npm install
 npm start
 ```
 
+## Groq AI Integration
+
+This application includes Groq AI integration for chat functionality.
+
+### Getting Your Groq API Key
+
+1. Visit [Groq Console](https://console.groq.com)
+2. Sign up or log in
+3. Navigate to API Keys section
+4. Create a new API key
+5. Copy your API key
+
+### Using Groq API Key
+
+**Option 1: Environment Variable (Recommended)**
+- Set the environment variable in your system:
+  ```bash
+  export REACT_APP_GROQ_API_KEY=your_api_key_here
+  ```
+- Or create a `.env` file in the project root:
+  ```bash
+  REACT_APP_GROQ_API_KEY=your_api_key_here
+  ```
+- Then rebuild Docker: `docker-compose up --build`
+
+**Option 2: Docker Build with Environment Variable**
+- Set the environment variable and run:
+  ```bash
+  REACT_APP_GROQ_API_KEY=your_key docker-compose up --build
+  ```
+
+### Available Groq Models
+
+The default model is `llama-3.1-8b-instant`. You can change this in `src/services/groqService.ts`:
+- `llama-3.1-8b-instant` (default - fastest)
+- `llama-3.1-70b-versatile`
+- `mixtral-8x7b-32768`
+- `gemma-7b-it`
+
+### Security Note
+
+⚠️ **Important**: For production applications, API keys should be stored securely on a backend server. The current implementation uses environment variables which are embedded at build time. Consider implementing a backend proxy for production use.
+
 ## Notes
 
 - The application runs in production mode inside Docker
 - Changes to source code require rebuilding the Docker image
 - For hot-reload during development, uncomment the volumes section in `docker-compose.yml`
+- Groq API key must be set via environment variable `REACT_APP_GROQ_API_KEY`
+- The project is now fully TypeScript-based
