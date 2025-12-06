@@ -8,14 +8,14 @@ const MoodStatus = ({ taskFeeling, energyLevel }) => {
   const navigate = useNavigate();
 
   const feelingLabels = {
-    overwhelmed: '😰 Feeling Overwhelmed',
-    structure: '📋 Need Structure',
+    overwhelmed: '😰 Overwhelming feelings',
+    structure: '📋 Structure',
   };
 
   const energyLabels = {
-    low: '😴 Low Energy',
-    moderate: '😊 Moderate Energy',
-    high: '🚀 High Energy',
+    low: '😴 Low',
+    moderate: '😊 Moderate',
+    high: '🚀 High',
   };
 
   const containerStyle = {
@@ -45,11 +45,11 @@ const MoodStatus = ({ taskFeeling, energyLevel }) => {
     <Card>
       <div style={containerStyle}>
         <div style={statusStyle}>
-          <div style={labelStyle}>Task Approach</div>
+          <div style={labelStyle}>Today I need help with</div>
           <div style={valueStyle}>{feelingLabels[taskFeeling] || 'Not set'}</div>
         </div>
         <div style={statusStyle}>
-          <div style={labelStyle}>Energy Level</div>
+          <div style={labelStyle}>My energy level is</div>
           <div style={valueStyle}>{energyLabels[energyLevel] || 'Not set'}</div>
         </div>
         <Button
@@ -57,7 +57,7 @@ const MoodStatus = ({ taskFeeling, energyLevel }) => {
           onClick={() => navigate('/')}
           style={{ padding: `${theme.spacing.sm} ${theme.spacing.md}`, fontSize: '14px' }}
         >
-          Update
+          It has changed
         </Button>
       </div>
     </Card>
