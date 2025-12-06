@@ -1,0 +1,42 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: little-wins
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    # Uncomment for development to mount source code:
+    # volumes:
+    #   - .:/app
+    #   - /app/node_modules
+    restart: unless-stopped
+    networks:
+      - little-wins-network
+
+  # Uncomment and configure if you need a database
+  # db:
+  #   image: postgres:15-alpine
+  #   container_name: little-wins-db
+  #   environment:
+  #     POSTGRES_USER: postgres
+  #     POSTGRES_PASSWORD: postgres
+  #     POSTGRES_DB: littlewins
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   networks:
+  #     - little-wins-network
+
+networks:
+  little-wins-network:
+    driver: bridge
+
+# Uncomment if using database
+# volumes:
+#   postgres_data:
+
+
