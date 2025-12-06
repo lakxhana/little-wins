@@ -1,6 +1,5 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import Header from '../common/Header';
 import Card from '../common/Card';
 import { theme } from '../../styles/theme';
 
@@ -14,21 +13,31 @@ const EnergyLevelScreen = ({ onSelect }) => {
 
   const containerStyle = {
     minHeight: '100vh',
-    background: theme.colors.background,
+    background: 'linear-gradient(180deg, #E3F2FD 0%, #E8EAF6 50%, #FFF3E0 100%)',
+    backgroundAttachment: 'fixed',
   };
 
   const contentStyle = {
+    maxWidth: '800px',
+    margin: '0 auto',
+    padding: theme.spacing.lg,
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: theme.spacing.lg,
-    minHeight: 'calc(100vh - 80px)',
+    minHeight: '100vh',
+  };
+
+  const appTitleStyle = {
+    ...theme.typography.h1,
+    color: theme.colors.primaryBlue,
+    marginBottom: theme.spacing.xl,
+    fontWeight: '600',
+    textAlign: 'center',
   };
 
   const titleStyle = {
-    fontSize: '32px',
-    fontWeight: '700',
+    ...theme.typography.h2,
     color: theme.colors.primaryText,
     marginBottom: theme.spacing.md,
     textAlign: 'center',
@@ -97,9 +106,9 @@ const EnergyLevelScreen = ({ onSelect }) => {
 
   return (
     <div style={containerStyle}>
-      <Header />
       <div style={contentStyle}>
-        <h1 style={titleStyle}>How's your energy today?</h1>
+        <h1 style={appTitleStyle}>Little Wins</h1>
+        <h2 style={titleStyle}>How's your energy today?</h2>
         <p style={subtitleStyle}>This helps us match tasks to your current state</p>
 
         <div style={optionsContainerStyle}>

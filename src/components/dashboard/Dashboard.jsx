@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import Header from '../common/Header';
 import MotivationalQuote from './MotivationalQuote';
 import MoodStatus from './MoodStatus';
 import TodoList from './TodoList';
@@ -195,10 +194,17 @@ const Dashboard = ({ taskFeeling, energyLevel, onUpdateTaskFeeling, onUpdateEner
     padding: theme.spacing.lg,
   };
 
+  const titleStyle = {
+    ...theme.typography.h1,
+    color: theme.colors.primaryBlue,
+    marginBottom: theme.spacing.xl,
+    fontWeight: '600',
+  };
+
   return (
     <div style={containerStyle}>
-      <Header />
       <div style={contentStyle}>
+        <h1 style={titleStyle}>Little Wins</h1>
         <MotivationalQuote />
         <MoodStatus
           taskFeeling={taskFeeling}
