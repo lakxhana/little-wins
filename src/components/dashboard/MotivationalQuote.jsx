@@ -72,9 +72,11 @@ const MotivationalQuote = () => {
   };
 
   const titleStyle = {
-    fontSize: '16px',
-    fontWeight: '600',
+    ...theme.typography.h3,
     color: theme.colors.primaryBlue,
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing.xs,
   };
 
   const refreshButtonStyle = {
@@ -89,7 +91,7 @@ const MotivationalQuote = () => {
   return (
     <Card>
       <div style={headerStyle}>
-        <div style={titleStyle}>✨ Hey! Kind reminder 💙</div>
+        <div style={titleStyle}>Hey! Kind reminder 💙</div>
         <button
           style={refreshButtonStyle}
           onClick={refreshQuote}

@@ -90,18 +90,21 @@ const FocusTools = () => {
   };
 
   const titleStyle = {
-    fontSize: '20px',
-    fontWeight: '600',
+    ...theme.typography.h2,
     color: theme.colors.primaryBlue,
     marginBottom: theme.spacing.lg,
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing.xs,
   };
 
   const sectionTitleStyle = {
-    fontSize: '17px',
-    fontWeight: '600',
+    ...theme.typography.h3,
     color: theme.colors.primaryText,
     marginBottom: theme.spacing.md,
-    letterSpacing: '0.2px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing.xs,
   };
 
   const timerDisplayStyle = {

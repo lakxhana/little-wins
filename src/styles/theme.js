@@ -37,6 +37,36 @@ export const theme = {
   fonts: {
     primary: "'Roboto', sans-serif",
   },
+  typography: {
+    h1: {
+      fontSize: '28px',
+      fontWeight: '600',
+      lineHeight: '1.3',
+      letterSpacing: '-0.3px',
+    },
+    h2: {
+      fontSize: '22px',
+      fontWeight: '600',
+      lineHeight: '1.4',
+      letterSpacing: '-0.2px',
+    },
+    h3: {
+      fontSize: '18px',
+      fontWeight: '600',
+      lineHeight: '1.5',
+      letterSpacing: '0px',
+    },
+    body: {
+      fontSize: '16px',
+      fontWeight: '400',
+      lineHeight: '1.6',
+    },
+    small: {
+      fontSize: '14px',
+      fontWeight: '400',
+      lineHeight: '1.5',
+    },
+  },
   spacing: {
     xs: '4px',
     sm: '8px',

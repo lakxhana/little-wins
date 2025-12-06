@@ -3,7 +3,7 @@ import { theme } from '../../styles/theme';
 
 const Header = () => {
   const headerStyle = {
-    padding: theme.spacing.lg,
+    padding: `${theme.spacing.lg} ${theme.spacing.xl}`,
     background: theme.colors.white,
     boxShadow: theme.shadows.sm,
     display: 'flex',
@@ -12,13 +12,14 @@ const Header = () => {
     position: 'sticky',
     top: 0,
     zIndex: 100,
+    borderBottom: `1px solid ${theme.colors.borderGray}`,
   };
 
   const titleStyle = {
-    fontSize: '24px',
-    fontWeight: '700',
+    ...theme.typography.h1,
     color: theme.colors.primaryBlue,
     margin: 0,
+    fontWeight: '600', // Softer than 700 for neurodivergent-friendly
   };
 
   return (

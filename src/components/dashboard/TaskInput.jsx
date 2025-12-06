@@ -264,9 +264,8 @@ const TaskInput = ({ onAddTask, energyLevel }) => {
     display: 'flex',
     alignItems: 'center',
     gap: theme.spacing.xs,
-    marginBottom: theme.spacing.sm,
-    fontSize: '16px',
-    fontWeight: '600',
+    marginBottom: theme.spacing.md,
+    ...theme.typography.h3,
     color: theme.colors.primaryText,
   };
 
@@ -409,7 +408,6 @@ const TaskInput = ({ onAddTask, energyLevel }) => {
         <>
           <Card style={dropdownCardStyle}>
             <div style={dropdownHeaderStyle}>
-              <span>✨</span>
               <span>AI Auto-Analysis</span>
               {isAnalyzingTask && <span style={{ fontSize: '12px', opacity: 0.7 }}>(🤖 AI Analyzing...)</span>}
               {!isAnalyzingTask && analysisData && <span style={{ fontSize: '10px', opacity: 0.6, marginLeft: '8px', color: '#10b981' }}>✓ Powered by Groq AI</span>}
@@ -470,7 +468,6 @@ const TaskInput = ({ onAddTask, energyLevel }) => {
             <Card style={breakdownCardStyle}>
               <div style={breakdownHeaderStyle}>
                 <div style={breakdownTitleStyle}>
-                  <span>✨</span>
                   <span>AI Task Assistant</span>
                   <span style={difficultyBadgeStyle}>HARD</span>
                   {!isBreakingDown && breakdownSteps.length > 0 && <span style={{ fontSize: '10px', opacity: 0.6, marginLeft: '8px', color: '#10b981' }}>✓ Powered by Groq AI</span>}
@@ -530,11 +527,9 @@ const TaskInput = ({ onAddTask, energyLevel }) => {
                       fontWeight: '600',
                     }}
                   >
-                    <span>✨</span>
-                    <span style={{ marginLeft: theme.spacing.xs }}>Add All Steps</span>
+                    <span>Add All Steps</span>
                   </Button>
                   <div style={{ marginTop: theme.spacing.sm, fontSize: '12px', color: theme.colors.primaryText, opacity: 0.7, display: 'flex', alignItems: 'center', gap: theme.spacing.xs }}>
-                    <span>✨</span>
                     <span>AI suggestions based on neurodivergent-friendly task management</span>
                   </div>
                 </>

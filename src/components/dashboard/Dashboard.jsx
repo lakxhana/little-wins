@@ -221,8 +221,9 @@ const Dashboard = ({ taskFeeling, energyLevel, onUpdateTaskFeeling, onUpdateEner
         {/* Show "Add New Task" only when there are no active tasks */}
         {activeTasks.length === 0 && (
           <Card>
-            <div style={{ fontSize: 20, fontWeight: 600, marginBottom: theme.spacing.md }}>
-              ➕ Add New Task
+            <div style={{ ...theme.typography.h2, color: theme.colors.primaryText, marginBottom: theme.spacing.md, display: 'flex', alignItems: 'center', gap: theme.spacing.xs }}>
+              <span>➕</span>
+              <span>Add New Task</span>
             </div>
             <TaskInput onAddTask={handleAddTask} energyLevel={energyLevel} />
           </Card>
