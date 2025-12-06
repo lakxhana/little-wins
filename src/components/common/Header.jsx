@@ -1,7 +1,7 @@
 import React from 'react';
 import { theme } from '../../styles/theme';
 
-const Header = ({ showBackButton = false, onBack }) => {
+const Header = () => {
   const headerStyle = {
     padding: theme.spacing.lg,
     background: theme.colors.white,
@@ -21,24 +21,9 @@ const Header = ({ showBackButton = false, onBack }) => {
     margin: 0,
   };
 
-  const backButtonStyle = {
-    background: 'transparent',
-    border: 'none',
-    fontSize: '24px',
-    cursor: 'pointer',
-    color: theme.colors.primaryBlue,
-    padding: theme.spacing.sm,
-  };
-
   return (
     <header style={headerStyle}>
-      {showBackButton && (
-        <button style={backButtonStyle} onClick={onBack} aria-label="Go back">
-          ←
-        </button>
-      )}
       <h1 style={titleStyle}>Little Wins</h1>
-      <div style={{ width: showBackButton ? '32px' : '0' }} /> {/* Spacer for centering */}
     </header>
   );
 };

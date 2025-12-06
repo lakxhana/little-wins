@@ -50,12 +50,16 @@ const TaskFeelingsScreen = ({ onSelect }) => {
     width: '100%',
   };
 
-  const optionCardStyle = {
+  const [hoveredCard, setHoveredCard] = React.useState(null);
+
+  const getOptionCardStyle = (feeling) => ({
     cursor: 'pointer',
     transition: theme.transitions.normal,
     padding: theme.spacing.xl,
     textAlign: 'center',
-  };
+    background: hoveredCard === feeling ? theme.colors.lightBlue : theme.colors.white,
+    transform: hoveredCard === feeling ? 'translateY(-4px)' : 'translateY(0)',
+  });
 
   const optionTitleStyle = {
     fontSize: '20px',
@@ -79,8 +83,10 @@ const TaskFeelingsScreen = ({ onSelect }) => {
 
         <div style={optionsContainerStyle}>
           <Card
-            style={optionCardStyle}
+            style={getOptionCardStyle('overwhelmed')}
             onClick={() => handleSelect('overwhelmed')}
+            onMouseEnter={() => setHoveredCard('overwhelmed')}
+            onMouseLeave={() => setHoveredCard(null)}
           >
             <div style={optionTitleStyle}>😰 I'm getting overwhelmed</div>
             <div style={optionDescStyle}>
@@ -89,8 +95,10 @@ const TaskFeelingsScreen = ({ onSelect }) => {
           </Card>
 
           <Card
-            style={optionCardStyle}
+            style={getOptionCardStyle('structure')}
             onClick={() => handleSelect('structure')}
+            onMouseEnter={() => setHoveredCard('structure')}
+            onMouseLeave={() => setHoveredCard(null)}
           >
             <div style={optionTitleStyle}>📋 I just need help with structure</div>
             <div style={optionDescStyle}>

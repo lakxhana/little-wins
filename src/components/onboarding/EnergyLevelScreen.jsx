@@ -75,12 +75,16 @@ const EnergyLevelScreen = ({ onSelect }) => {
     },
   ];
 
-  const cardStyle = {
+  const [hoveredCard, setHoveredCard] = React.useState(null);
+
+  const getCardStyle = (level) => ({
     cursor: 'pointer',
     transition: theme.transitions.normal,
     padding: theme.spacing.lg,
     textAlign: 'center',
-  };
+    background: hoveredCard === level ? theme.colors.lightBlue : theme.colors.white,
+    transform: hoveredCard === level ? 'translateY(-4px)' : 'translateY(0)',
+  });
 
   const optionTitleStyle = {
     fontSize: '18px',
@@ -106,8 +110,10 @@ const EnergyLevelScreen = ({ onSelect }) => {
           {energyOptions.map((option) => (
             <Card
               key={option.level}
-              style={cardStyle}
+              style={getCardStyle(option.level)}
               onClick={() => handleSelect(option.level)}
+              onMouseEnter={() => setHoveredCard(option.level)}
+              onMouseLeave={() => setHoveredCard(null)}
             >
               <div style={{ fontSize: '32px', marginBottom: theme.spacing.sm }}>
                 {option.emoji}
