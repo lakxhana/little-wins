@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Header from '../common/Header';
 import MotivationalQuote from './MotivationalQuote';
 import TaskWarrior from './TaskWarrior';
 import MoodStatus from './MoodStatus';
@@ -259,6 +260,7 @@ const Dashboard = ({ taskFeeling, energyLevel, onUpdateTaskFeeling, onUpdateEner
 
   return (
     <div style={containerStyle}>
+      <Header pageTitle="Dashboard" />
       <div style={contentStyle}>
         <MotivationalQuote />
         <TaskWarrior />
