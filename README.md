@@ -1,172 +1,106 @@
-# little-wins
+# Little Wins
 
-![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/lakxhana/little-wins?utm_source=oss&utm_medium=github&utm_campaign=lakxhana%2Flittle-wins&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)
+A task management app designed specifically for neurodivergent people (ADHD, autism, and other neurodivergent conditions).
 
-A React application containerized with Docker.
+## What is Little Wins?
 
-## Prerequisites
+Little Wins helps neurodivergent people manage tasks in a way that works with how their brains function. Traditional task managers can be overwhelming, but Little Wins breaks tasks down into manageable steps, provides gentle support, and celebrates small victories.
 
-Before running this project, you need to install Docker on your machine:
+### Key Features
 
-### macOS
-1. Download Docker Desktop from: https://www.docker.com/products/docker-desktop
-2. Install and launch Docker Desktop
-3. Verify installation: `docker --version`
+- **AI-Powered Task Breakdown**: Automatically breaks large tasks into smaller, manageable steps
+- **Gentle Reminders**: Supportive, non-judgmental language throughout
+- **Energy-Aware**: Adapts to your current energy level (low, moderate, high)
+- **Task Warrior**: Gamified progress tracking that rewards consistency, not perfection
+- **Brain Dump**: Quick capture of thoughts and tasks without judgment
+- **Snooze Feature**: Take breaks when you need them without guilt
+- **Overwhelmed Support**: Built-in breathing exercises and supportive options when tasks feel too big
+- **Visual Calm**: Soft colors and minimal design to reduce sensory overwhelm
 
-### Windows
-1. Install WSL 2 (Windows Subsystem for Linux 2):
-   ```powershell
-   wsl --install
-   ```
-   Or follow: https://docs.microsoft.com/en-us/windows/wsl/install
+## Who is this for?
 
-2. Download Docker Desktop for Windows from: https://www.docker.com/products/docker-desktop
-3. During installation, ensure "Use WSL 2 based engine" is enabled
-4. Restart your computer if prompted
-5. Launch Docker Desktop
-6. Verify installation: `docker --version`
-
-### Linux
-1. Install Docker using your distribution's package manager
-2. Verify installation: `docker --version`
+Little Wins is designed for people who are:
+- Neurodivergent (ADHD, autism, dyslexia, etc.)
+- Overwhelmed by traditional productivity apps
+- Looking for a gentler, more supportive approach to task management
+- Wanting to celebrate small wins, not just big achievements
 
 ## Getting Started
 
-### 1. Clone the Repository
+### Prerequisites
+
+You need Docker installed on your machine:
+
+**macOS:**
+1. Download Docker Desktop from: https://www.docker.com/products/docker-desktop
+2. Install and launch Docker Desktop
+3. Verify: `docker --version`
+
+**Windows:**
+1. Install WSL 2: `wsl --install`
+2. Download Docker Desktop for Windows
+3. Enable "Use WSL 2 based engine" during installation
+4. Restart and verify: `docker --version`
+
+**Linux:**
+1. Install Docker using your distribution's package manager
+2. Verify: `docker --version`
+
+### Setup
+
+1. **Clone the repository:**
 ```bash
 git clone <repository-url>
 cd little-wins
 ```
 
-### 2. Run with Docker Compose
+2. **Set up your Groq API key:**
+   - Get your API key from [Groq Console](https://console.groq.com)
+   - Create a `.env` file in the project root:
+   ```bash
+   REACT_APP_GROQ_API_KEY=your_api_key_here
+   ```
 
-**Build and start the application:**
+3. **Run with Docker:**
 ```bash
 docker-compose up --build
 ```
 
-**Or run in detached mode (background):**
-```bash
-docker-compose up --build -d
-```
+4. **Access the app:**
+   Open your browser to `http://localhost:3000`
 
-### 3. Access the Application
+## How It Works
 
-Once the container is running, open your browser and navigate to:
-```
-http://localhost:3000
-```
+1. **Onboarding**: Tell the app how you're feeling and your energy level
+2. **Add Tasks**: Type what you need to do - the AI will analyze and break it down if needed
+3. **Work Through Tasks**: Focus on one task at a time, with breaks when you need them
+4. **Track Progress**: Watch your Task Warrior level up as you complete tasks
+5. **Review**: See your accomplishments and celebrate your wins
 
-You should see the "Little Wins" React application.
+## Features Explained
 
-## Common Commands
+### AI Task Breakdown
+When you add a task, the AI analyzes it and:
+- Estimates difficulty and time
+- Breaks large tasks (30+ minutes) into smaller steps
+- Provides ADHD-friendly tips
+- Limits breakdowns to 5 steps maximum to prevent overwhelm
 
-### Start the application
-```bash
-docker-compose up -d
-```
+### Task Warrior
+A gamification system that tracks:
+- **XP**: Earned by completing tasks
+- **Focus**: Increases with consistency
+- **Energy**: Grows when you complete tasks early or tackle hard tasks
+- **Momentum**: Builds with streaks and fast completions
 
-### Stop/Terminate the application
+### Snooze Feature
+If a task feels too much right now, you can snooze it. It'll come back later when you're ready.
 
-**Stop and remove containers (recommended):**
-```bash
-docker-compose down
-```
-
-**Stop containers but keep them (for quick restart):**
-```bash
-docker-compose stop
-```
-
-**Stop and remove containers, networks, and volumes:**
-```bash
-docker-compose down -v
-```
-
-**Force stop (if container is unresponsive):**
-```bash
-docker-compose kill
-docker-compose down
-```
-
-**If running in foreground (not detached mode):**
-Press `Ctrl + C` in the terminal, then run:
-```bash
-docker-compose down
-```
-
-### View logs
-```bash
-docker-compose logs -f
-```
-
-### Rebuild after code changes
-```bash
-docker-compose up --build -d
-```
-
-### Check container status
-```bash
-docker-compose ps
-```
-
-### Restart the container
-```bash
-docker-compose restart
-```
-
-## Project Structure
-
-```
-little-wins/
-├── src/
-│   ├── components/
-│   │   └── ChatInterface.tsx  # Main React component
-│   ├── services/
-│   │   └── groqService.ts     # Groq API service
-│   └── main.tsx               # React entry point
-├── public/
-│   └── index.html             # HTML template
-├── Dockerfile                 # Docker image configuration
-├── docker-compose.yml         # Docker Compose configuration
-├── tsconfig.json              # TypeScript configuration
-├── package.json               # Node.js dependencies
-└── README.md                  # This file
-```
-
-## Troubleshooting
-
-### Port 3000 already in use
-If port 3000 is already in use, you can change it in `docker-compose.yml`:
-```yaml
-ports:
-  - "3001:3000"  # Change 3000 to 3001 (or any available port)
-```
-
-### Docker not running
-Make sure Docker Desktop is running. Check with:
-```bash
-docker ps
-```
-
-### Container keeps restarting
-Check the logs for errors:
-```bash
-docker-compose logs
-```
-
-### Clean rebuild
-If you encounter issues, try a clean rebuild:
-```bash
-docker-compose down
-docker-compose build --no-cache
-docker-compose up -d
-```
-
-### Remove all containers and images
-```bash
-docker-compose down --rmi all
-```
+### Overwhelmed Support
+Click "I feel overwhelmed" to get:
+- A breathing exercise
+- Option to snooze the task
+- Encouragement to try anyway
 
 ## Development
 
@@ -176,53 +110,68 @@ npm install
 npm start
 ```
 
+## Project Structure
+
+```
+little-wins/
+├── src/
+│   ├── components/
+│   │   ├── dashboard/      # Main dashboard components
+│   │   ├── onboarding/     # Onboarding flow
+│   │   └── common/         # Reusable components
+│   ├── services/
+│   │   └── groqService.ts  # AI integration
+│   └── styles/             # Theme and styling
+├── Dockerfile
+├── docker-compose.yml
+└── package.json
+```
+
 ## Groq AI Integration
 
-This application includes Groq AI integration for chat functionality.
+Little Wins uses Groq AI for:
+- Task analysis and difficulty assessment
+- Breaking down complex tasks
+- Generating motivational quotes
+- Providing ADHD-friendly tips
 
-### Getting Your Groq API Key
+### Getting Your API Key
 
 1. Visit [Groq Console](https://console.groq.com)
 2. Sign up or log in
-3. Navigate to API Keys section
-4. Create a new API key
-5. Copy your API key
+3. Create a new API key
+4. Add it to your `.env` file as `REACT_APP_GROQ_API_KEY`
 
-### Using Groq API Key
+### Available Models
 
-**Option 1: Environment Variable (Recommended)**
-- Set the environment variable in your system:
-  ```bash
-  export REACT_APP_GROQ_API_KEY=your_api_key_here
-  ```
-- Or create a `.env` file in the project root:
-  ```bash
-  REACT_APP_GROQ_API_KEY=your_api_key_here
-  ```
-- Then rebuild Docker: `docker-compose up --build`
+Default: `llama-3.1-8b-instant` (fastest). You can change this in `src/services/groqService.ts`.
 
-**Option 2: Docker Build with Environment Variable**
-- Set the environment variable and run:
-  ```bash
-  REACT_APP_GROQ_API_KEY=your_key docker-compose up --build
-  ```
+## Common Commands
 
-### Available Groq Models
+**Start:** `docker-compose up -d`  
+**Stop:** `docker-compose down`  
+**View logs:** `docker-compose logs -f`  
+**Rebuild:** `docker-compose up --build -d`
 
-The default model is `llama-3.1-8b-instant`. You can change this in `src/services/groqService.ts`:
-- `llama-3.1-8b-instant` (default - fastest)
-- `llama-3.1-70b-versatile`
-- `mixtral-8x7b-32768`
-- `gemma-7b-it`
+## Troubleshooting
 
-### Security Note
+**Port 3000 in use?** Change the port in `docker-compose.yml`
 
-⚠️ **Important**: For production applications, API keys should be stored securely on a backend server. The current implementation uses environment variables which are embedded at build time. Consider implementing a backend proxy for production use.
+**Container issues?** Check logs: `docker-compose logs`
 
-## Notes
+**Clean rebuild:** `docker-compose down && docker-compose build --no-cache && docker-compose up -d`
 
-- The application runs in production mode inside Docker
-- Changes to source code require rebuilding the Docker image
-- For hot-reload during development, uncomment the volumes section in `docker-compose.yml`
-- Groq API key must be set via environment variable `REACT_APP_GROQ_API_KEY`
-- The project is now fully TypeScript-based
+## Security Note
+
+⚠️ For production, API keys should be stored on a backend server. The current implementation embeds keys at build time via environment variables.
+
+## Philosophy
+
+Little Wins is built on the understanding that:
+- Small steps are still progress
+- Rest is valid
+- Everyone's pace is different
+- Overwhelm is real and okay
+- Celebrating small wins matters
+
+This app is designed to support, not pressure. You're doing enough.

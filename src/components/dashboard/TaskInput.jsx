@@ -195,9 +195,9 @@ const TaskInput = ({ onAddTask, energyLevel }) => {
 
     setIsAnalyzing(true);
     try {
-      // Simulate AI analysis - replace with actual AI service later
-      await new Promise(resolve => setTimeout(resolve, 800));
-      onAddTask(trimmed);
+      // Use the XP reward from analysis if available, otherwise it will default in Dashboard
+      const xpReward = analysisData?.xpReward || null;
+      onAddTask(trimmed, xpReward);
       setTaskText('');
       setAnalysisData(null);
       setAdhdTips([]);

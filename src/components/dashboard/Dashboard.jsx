@@ -97,19 +97,34 @@ const Dashboard = ({ taskFeeling, energyLevel, onUpdateTaskFeeling, onUpdateEner
     });
   }, [tasks, hasLoaded]);
 
-  const handleAddTask = (taskText) => {
+  const handleAddTask = (taskText, xpReward = null) => {
     // Support both single task and array of tasks
     const taskTexts = Array.isArray(taskText) ? taskText : [taskText];
     
     // Generate unique IDs using timestamp + random + index to ensure uniqueness
     // Use a single timestamp base to ensure all tasks from the same batch are grouped
     const baseId = Date.now();
-    const newTasks = taskTexts.map((text, index) => ({
-      id: `${baseId}-${index}-${Math.random().toString(36).substr(2, 9)}`, // Ensure unique IDs with order preserved
-      text: text,
-      completed: false,
-      complexity: assessComplexity(text, energyLevel),
-    }));
+    const newTasks = taskTexts.map((text, index) => {
+      // Calculate XP reward: use provided value, or default based on complexity
+      const complexity = assessComplexity(text, energyLevel);
+      let taskXpReward = xpReward;
+      if (!taskXpReward) {
+        // Default XP based on complexity if not provided
+        switch (complexity) {
+          case 'high': taskXpReward = 30; break;
+          case 'medium': taskXpReward = 20; break;
+          default: taskXpReward = 10; break;
+        }
+      }
+      
+      return {
+        id: `${baseId}-${index}-${Math.random().toString(36).substr(2, 9)}`, // Ensure unique IDs with order preserved
+        text: text,
+        completed: false,
+        complexity: complexity,
+        xpReward: taskXpReward,
+      };
+    });
     
     // Use functional update to ensure we're working with the latest state
     setTasks(prevTasks => {
@@ -130,10 +145,11 @@ const Dashboard = ({ taskFeeling, energyLevel, onUpdateTaskFeeling, onUpdateEner
             // Get start time for this task
             const startTime = taskStartTimes.get(taskId) || null;
             
-            // Dispatch custom event for TaskWarrior to listen to with task complexity and start time
+            // Dispatch custom event for TaskWarrior to listen to with task complexity, XP reward, and start time
             window.dispatchEvent(new CustomEvent('taskCompleted', {
               detail: { 
                 complexity: task.complexity || 'low',
+                xpReward: task.xpReward || 10, // Default to 10 if not set
                 startTime: startTime
               }
             }));

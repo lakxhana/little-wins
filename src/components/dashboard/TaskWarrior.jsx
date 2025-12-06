@@ -123,15 +123,21 @@ const TaskWarrior = () => {
       const completedEarly = actualTime && actualTime < expectedTime;
       const completedFast = actualTime && actualTime < (expectedTime * 0.7); // 30% faster than expected
       
-      // Update XP
+      // Update XP - use the xpReward from the task, default to 1 if not provided
+      const xpReward = event.detail?.xpReward || 1;
       setXp(prevXp => {
-        const newXp = prevXp + 1;
-        // Check if we should level up
-        if (newXp >= XP_PER_LEVEL) {
-          setLevel(prevLevel => prevLevel + 1);
-          return newXp - XP_PER_LEVEL; // Reset XP, keeping overflow
+        const newXp = prevXp + xpReward;
+        // Check if we should level up (may level up multiple times if XP reward is large)
+        let remainingXp = newXp;
+        let levelsGained = 0;
+        while (remainingXp >= XP_PER_LEVEL) {
+          levelsGained++;
+          remainingXp -= XP_PER_LEVEL;
         }
-        return newXp;
+        if (levelsGained > 0) {
+          setLevel(prevLevel => prevLevel + levelsGained);
+        }
+        return remainingXp;
       });
 
       // Update consecutive completions and track previous value for Momentum calculation
