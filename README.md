@@ -175,3 +175,4 @@ Little Wins is built on the understanding that:
 - Celebrating small wins matters
 
 This app is designed to support, not pressure. You're doing enough.
+![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/lakxhana/little-wins?utm_source=oss&utm_medium=github&utm_campaign=lakxhana%2Flittle-wins&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)
