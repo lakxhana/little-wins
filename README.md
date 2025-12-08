@@ -176,3 +176,5 @@ Little Wins is built on the understanding that:
 
 This app is designed to support, not pressure. You're doing enough.
 ![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/lakxhana/little-wins?utm_source=oss&utm_medium=github&utm_campaign=lakxhana%2Flittle-wins&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)
+
+Bug Identified via Code Rabbit: API key stored directly in code Why this is the most critical bug: Because exposing an API key can allow unauthorized access to services, leading to security breaches, billing abuse, or data leaks. Fixing it protects our system, prevents misuse, and follows best security practices.
