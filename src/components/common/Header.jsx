@@ -62,6 +62,11 @@ const Header = ({ showMenu = true, pageTitle }) => {
     margin: 0,
     fontWeight: '600',
     fontSize: width <= 480 ? '20px' : width <= 768 ? '24px' : theme.typography.h1.fontSize,
+    flex: 1,
+    minWidth: 0, // Allow text to shrink
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
   };
 
   const hamburgerButtonStyle = {
@@ -113,18 +118,48 @@ const Header = ({ showMenu = true, pageTitle }) => {
     const isMobile = width <= 480;
     const isTablet = width > 480 && width <= 768;
     
+    if (isMobile) {
+      // On mobile: full width menu aligned to right edge of screen
+      // Calculate header height dynamically
+      const headerHeight = width <= 480 ? '56px' : '64px'; // Approximate header height
+      return {
+        position: 'fixed',
+        top: headerHeight,
+        right: theme.spacing.md,
+        left: theme.spacing.md,
+        marginTop: 0,
+        backgroundColor: theme.colors.white,
+        borderRadius: theme.borderRadius.md,
+        boxShadow: theme.shadows.lg,
+        width: `calc(100vw - ${theme.spacing.md * 2}px)`,
+        maxWidth: 'none',
+        padding: `${theme.spacing.sm} 0`,
+        opacity: isMenuOpen ? 1 : 0,
+        visibility: isMenuOpen ? 'visible' : 'hidden',
+        transform: isMenuOpen ? 'translateY(0) scale(1)' : 'translateY(-10px) scale(0.95)',
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        pointerEvents: isMenuOpen ? 'auto' : 'none',
+        zIndex: 1000,
+        border: `1px solid ${theme.colors.borderGray}`,
+        overflow: 'hidden',
+        display: isMenuOpen ? 'block' : 'none',
+        boxSizing: 'border-box',
+      };
+    }
+    
+    // Desktop/Tablet: positioned relative to hamburger button
     return {
       position: 'absolute',
       top: 'calc(100% + 8px)',
-      right: isMobile ? theme.spacing.md : isTablet ? theme.spacing.sm : 0,
-      left: isMobile ? theme.spacing.md : 'auto',
+      right: isTablet ? theme.spacing.sm : 0,
+      left: 'auto',
       marginTop: 0,
       backgroundColor: theme.colors.white,
       borderRadius: theme.borderRadius.md,
       boxShadow: theme.shadows.lg,
-      minWidth: isMobile ? '200px' : '180px',
-      maxWidth: isMobile ? `calc(100vw - ${theme.spacing.md * 2}px)` : 'none',
-      width: isMobile ? `calc(100vw - ${theme.spacing.md * 2}px)` : 'auto',
+      minWidth: '180px',
+      width: 'auto',
+      maxWidth: 'none',
       padding: `${theme.spacing.sm} 0`,
       opacity: isMenuOpen ? 1 : 0,
       visibility: isMenuOpen ? 'visible' : 'hidden',
@@ -172,6 +207,8 @@ const Header = ({ showMenu = true, pageTitle }) => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'flex-end',
+            flexShrink: 0, // Prevent hamburger from shrinking
+            marginLeft: theme.spacing.sm, // Add spacing from title
           }} 
           ref={menuRef}
         >
@@ -192,49 +229,47 @@ const Header = ({ showMenu = true, pageTitle }) => {
             <div style={hamburgerLine3Style(isMenuOpen)}></div>
           </button>
           
-          {isMenuOpen && (
-            <div style={menuStyle}>
-              <div
-                style={menuItemStyle}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = theme.colors.lightGray}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                onTouchStart={(e) => e.currentTarget.style.backgroundColor = theme.colors.lightGray}
-                onTouchEnd={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                onClick={() => {
-                  setIsMenuOpen(false);
-                  navigate('/dashboard');
-                }}
-              >
-                📊 Dashboard
-              </div>
-              <div
-                style={menuItemStyle}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = theme.colors.lightGray}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                onTouchStart={(e) => e.currentTarget.style.backgroundColor = theme.colors.lightGray}
-                onTouchEnd={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                onClick={() => {
-                  setIsMenuOpen(false);
-                  navigate('/settings');
-                }}
-              >
-                ⚙️ Settings
-              </div>
-              <div
-                style={menuItemStyle}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = theme.colors.lightGray}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                onTouchStart={(e) => e.currentTarget.style.backgroundColor = theme.colors.lightGray}
-                onTouchEnd={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                onClick={() => {
-                  setIsMenuOpen(false);
-                  navigate('/review');
-                }}
-              >
-                📝 Review
-              </div>
+          <div style={menuStyle}>
+            <div
+              style={menuItemStyle}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = theme.colors.lightGray}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+              onTouchStart={(e) => e.currentTarget.style.backgroundColor = theme.colors.lightGray}
+              onTouchEnd={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+              onClick={() => {
+                setIsMenuOpen(false);
+                navigate('/dashboard');
+              }}
+            >
+              📊 Dashboard
             </div>
-          )}
+            <div
+              style={menuItemStyle}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = theme.colors.lightGray}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+              onTouchStart={(e) => e.currentTarget.style.backgroundColor = theme.colors.lightGray}
+              onTouchEnd={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+              onClick={() => {
+                setIsMenuOpen(false);
+                navigate('/settings');
+              }}
+            >
+              ⚙️ Settings
+            </div>
+            <div
+              style={menuItemStyle}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = theme.colors.lightGray}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+              onTouchStart={(e) => e.currentTarget.style.backgroundColor = theme.colors.lightGray}
+              onTouchEnd={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+              onClick={() => {
+                setIsMenuOpen(false);
+                navigate('/review');
+              }}
+            >
+              📝 Review
+            </div>
+          </div>
         </div>
       )}
     </header>
