@@ -27,7 +27,7 @@ interface GroqResponse {
   };
 }
 
-export const sendMessageToGroq = async (message: string, apiKey: string): Promise<string> => {
+export const sendMessageToGroq = async (message: string, apiKey: string, temperature: number = 0.7): Promise<string> => {
   if (!apiKey) {
     throw new Error('Groq API key is required. Please set REACT_APP_GROQ_API_KEY in your .env file');
   }
@@ -47,7 +47,7 @@ export const sendMessageToGroq = async (message: string, apiKey: string): Promis
           content: message
         }
       ],
-      temperature: 0.7,
+      temperature: temperature,
       max_tokens: 1024
     };
 
@@ -101,18 +101,74 @@ interface TaskAnalysis {
 export const analyzeTaskWithGroq = async (
   taskText: string,
   energyLevel: string | null,
+  taskFeeling: string | null,
   apiKey: string
 ): Promise<TaskAnalysis> => {
   if (!apiKey) {
     throw new Error('Groq API key is required. Please set REACT_APP_GROQ_API_KEY in your .env file');
   }
 
-  const energyContext = energyLevel ? `The user's current energy level is: ${energyLevel}.` : '';
+  // Build comprehensive context
+  let contextParts = [];
+  if (energyLevel) {
+    const energyDescriptions = {
+      low: 'low energy (needs simple, manageable tasks)',
+      moderate: 'moderate energy (can handle regular tasks)',
+      high: 'high energy (ready for challenges)'
+    };
+    contextParts.push(`Energy level: ${energyDescriptions[energyLevel as keyof typeof energyDescriptions] || energyLevel}`);
+  }
+  if (taskFeeling) {
+    const feelingDescriptions = {
+      overwhelmed: 'feeling overwhelmed (needs help managing the load)',
+      structure: 'needs help with structure and organization'
+    };
+    contextParts.push(`Current state: ${feelingDescriptions[taskFeeling as keyof typeof feelingDescriptions] || taskFeeling}`);
+  }
+  const context = contextParts.length > 0 ? `\n\nUser Context:\n${contextParts.join('\n')}` : '';
   
-  const prompt = `Analyze the following task and provide a structured analysis. Consider the task complexity, estimated time, and provide ADHD-friendly tips.
+  // Safety check: If the task contains concerning content, respond with care
+  // Use word boundaries for single words to avoid false positives
+  const lowerTaskText = taskText.toLowerCase();
+  const wordBoundaryCheck = (word: string) => {
+    const regex = new RegExp(`\\b${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+    return regex.test(lowerTaskText);
+  };
+  
+  const hasConcerningContent = 
+    wordBoundaryCheck('suicide') || 
+    wordBoundaryCheck('kill') || 
+    wordBoundaryCheck('murder') ||
+    lowerTaskText.includes('end my life') ||
+    wordBoundaryCheck('hurt') ||
+    lowerTaskText.includes('self harm') ||
+    lowerTaskText.includes('want to die') ||
+    wordBoundaryCheck('violence') ||
+    wordBoundaryCheck('attack') ||
+    wordBoundaryCheck('assault') ||
+    wordBoundaryCheck('hang') ||
+    wordBoundaryCheck('die') ||
+    wordBoundaryCheck('death') ||
+    wordBoundaryCheck('dying') ||
+    wordBoundaryCheck('dead') ||
+    wordBoundaryCheck('drug') ||
+    wordBoundaryCheck('overdose') ||
+    wordBoundaryCheck('smoking') ||
+    wordBoundaryCheck('nicotine') ||
+    wordBoundaryCheck('addiction') ||
+    wordBoundaryCheck('alcohol');
 
-Task: "${taskText}"
-${energyContext}
+  if (hasConcerningContent) {
+    // Don't analyze concerning content as a task
+    // Return a response that encourages seeking help
+    throw new Error('SAFETY_CONCERN');
+  }
+
+  const prompt = `Analyze the following task and provide a structured analysis. Consider the task complexity, estimated time, and provide ADHD-friendly tips. IMPORTANTLY: Adjust your analysis based on the user's current energy level and emotional state.
+
+CRITICAL SAFETY NOTE: If the task text contains any references to self-harm, suicide, or wanting to die, DO NOT analyze it as a task. Instead, respond with a message expressing concern and encouraging the user to seek help. However, in this case, the safety check should have caught it before reaching this point.
+
+Task: "${taskText}"${context}
 
 Please analyze this task and respond with ONLY a valid JSON object in this exact format (no markdown, no code blocks, just the raw JSON):
 {
@@ -123,10 +179,14 @@ Please analyze this task and respond with ONLY a valid JSON object in this exact
 }
 
 Guidelines:
-- Difficulty: "Easy" for simple tasks (1-5 steps), "Medium" for moderate tasks (6-15 steps), "Hard" for complex tasks (16+ steps or multiple components)
-- Time: Estimate realistic completion time in minutes (m) or hours (h)
-- XP Reward: 10 for Easy, 20 for Medium, 30 for Hard
-- ADHD Tips: Provide exactly 2 SHORT, concise tips (max 6-8 words each). Tips must be brief and scannable for neurodivergent users. Be direct and actionable. Examples: "Set timer", "Break it down", "Start small", "Use Pomodoro", "One step at a time", "Take breaks"
+- Difficulty: Adjust based on user's energy and state. If user has low energy or is overwhelmed, consider breaking complex tasks into easier chunks. "Easy" for simple tasks (1-5 steps), "Medium" for moderate tasks (6-15 steps), "Hard" for complex tasks (16+ steps or multiple components)
+- Time: Estimate realistic completion time considering user's energy level. If low energy, tasks may take longer. If high energy, they may be faster.
+- XP Reward: 10 for Easy, 20 for Medium, 30 for Hard. Adjust slightly based on user's state (e.g., if overwhelmed but completing a task, reward appropriately)
+- ADHD Tips: Provide exactly 2 SHORT, concise tips (max 6-8 words each). Tips must be brief and scannable for neurodivergent users. Be direct and actionable. Tailor tips to user's current state:
+  * If overwhelmed: focus on calming, breaking down, starting small
+  * If low energy: focus on simple steps, rest, pacing
+  * If needs structure: focus on organization, planning, systems
+  Examples: "Set timer", "Break it down", "Start small", "Use Pomodoro", "One step at a time", "Take breaks", "Breathe first", "Start with 5 mins"
 
 Respond with ONLY the JSON object, nothing else.`;
 
@@ -177,18 +237,35 @@ export interface TaskBreakdownStep {
 export const breakDownTaskWithGroq = async (
   taskText: string,
   energyLevel: string | null,
+  taskFeeling: string | null,
   apiKey: string
 ): Promise<TaskBreakdownStep[]> => {
   if (!apiKey) {
     throw new Error('Groq API key is required. Please set REACT_APP_GROQ_API_KEY in your .env file');
   }
 
-  const energyContext = energyLevel ? `The user's current energy level is: ${energyLevel}.` : '';
+  // Build comprehensive context
+  let contextParts = [];
+  if (energyLevel) {
+    const energyDescriptions = {
+      low: 'low energy (needs very simple, small steps)',
+      moderate: 'moderate energy (can handle regular steps)',
+      high: 'high energy (can handle more complex steps)'
+    };
+    contextParts.push(`Energy: ${energyDescriptions[energyLevel as keyof typeof energyDescriptions] || energyLevel}`);
+  }
+  if (taskFeeling) {
+    const feelingDescriptions = {
+      overwhelmed: 'feeling overwhelmed (needs extra breaks, smaller steps)',
+      structure: 'needs structure (organize steps clearly)'
+    };
+    contextParts.push(`State: ${feelingDescriptions[taskFeeling as keyof typeof feelingDescriptions] || taskFeeling}`);
+  }
+  const context = contextParts.length > 0 ? `\n\nUser Context:\n${contextParts.join('\n')}\n\nIMPORTANT: Adjust breakdown based on this context. If overwhelmed or low energy, make steps smaller and add more breaks.` : '';
   
-  const prompt = `Break down the following task into 3-4 logical, meaningful work steps plus 1-2 breaks (5 steps total maximum). This is for someone with ADHD/neurodivergent needs.
+  const prompt = `Break down the following task into 3-4 logical, meaningful work steps plus 1-2 breaks (5 steps total maximum). This is for someone with ADHD/neurodivergent needs.${context}
 
 Task: "${taskText}"
-${energyContext}
 
 IMPORTANT RULES:
 - Focus on the ACTUAL WORK that needs to be done, NOT preparation steps
@@ -397,19 +474,39 @@ Respond with ONLY the JSON array, nothing else.`;
 /**
  * Generate a short, simple, and encouraging motivational quote for neurodivergent users
  */
-export const generateMotivationalQuote = async (apiKey: string): Promise<string> => {
-  const prompt = `Generate a short, simple, and encouraging motivational quote for someone with ADHD or other neurodivergent conditions.
+export const generateMotivationalQuote = async (
+  apiKey: string,
+  taskFeeling?: string | null,
+  energyLevel?: string | null
+): Promise<string> => {
+  let context = '';
+  if (taskFeeling || energyLevel) {
+    const parts = [];
+    if (taskFeeling === 'overwhelmed') parts.push('feeling overwhelmed');
+    if (energyLevel === 'low') parts.push('low energy');
+    if (parts.length > 0) {
+      context = `\n\nUser Context: The person is ${parts.join(' and ')}. Tailor the quote to be especially supportive and understanding of this state.`;
+    }
+  }
+  
+  const prompt = `Generate a short, simple, and encouraging motivational quote for someone with ADHD or other neurodivergent conditions.${context}
+
+CRITICAL: You MUST respond with ONLY ONE SENTENCE. Maximum 15 words. Do NOT write multiple sentences or paragraphs. This is for neurodivergent users who can be overwhelmed by too much text.
+
+IMPORTANT: Generate a DIFFERENT and UNIQUE quote each time. Do NOT repeat previous quotes. Be creative and vary your wording, themes, and approaches.
 
 CRITICAL REQUIREMENTS:
-- Keep it SHORT (maximum 12-15 words)
+- ONE SENTENCE ONLY (maximum 12-15 words, never more)
 - Keep it SIMPLE and straightforward
 - Make it encouraging and supportive
 - Avoid complex metaphors or abstract concepts
 - Use direct, clear language
 - Focus on progress, small wins, or self-compassion
 - Be warm and understanding
+- VARY your quotes - use different themes, wording, and perspectives each time
+- NO multiple sentences, NO paragraphs, NO lists
 
-Examples of GOOD quotes:
+Examples of GOOD quotes (ONE sentence each, use as inspiration but create NEW ones):
 - "Small steps forward are still progress. You've got this!"
 - "Every completed task is a victory, no matter how small."
 - "Your pace is perfect. Keep moving forward."
@@ -417,23 +514,48 @@ Examples of GOOD quotes:
 - "Today's small win is tomorrow's foundation."
 - "You don't have to be perfect, just keep going."
 - "Rest is valid. You're doing enough."
+- "Progress, not perfection, is the goal."
+- "You're doing better than you think."
+- "One task at a time is enough."
+- "Your effort matters, even when it feels small."
+- "It's okay to take breaks. You're human."
 
-Examples of BAD quotes (too long or complex):
-- "In the journey of a thousand miles, the first step is the most important, and remember that every journey is unique to the individual traveler."
-- "Like a phoenix rising from the ashes, you too can transform your challenges into opportunities for growth."
+Examples of BAD responses (DO NOT DO THIS):
+- Multiple sentences: "You've made it through today, and tomorrow is a new chance. Every task done is a step closer."
+- Paragraphs: "Your effort counts, no matter how it looks right now. Take a breath, and start again with kindness."
+- Too long: "In the journey of a thousand miles, the first step is the most important, and remember that every journey is unique."
 
-Respond with ONLY the quote text, no quotes, no explanation, just the quote itself.`;
+Respond with ONLY ONE SENTENCE (12-15 words maximum). No quotes, no explanation, just the single sentence quote itself.`;
 
   try {
     console.log('🤖 AI: Generating motivational quote with Groq AI...');
-    const response = await sendMessageToGroq(prompt, apiKey);
-    const quote = response.trim();
+    // Use higher temperature (0.9) for more variety in quotes
+    const response = await sendMessageToGroq(prompt, apiKey, 0.9);
+    let quote = response.trim();
     
     // Remove any surrounding quotes if present
-    const cleanedQuote = quote.replace(/^["']|["']$/g, '');
+    quote = quote.replace(/^["']|["']$/g, '');
     
-    console.log('✅ AI: Motivational quote generated', { quote: cleanedQuote });
-    return cleanedQuote || "Small steps forward are still progress. You've got this!";
+    // Ensure it's only one sentence - take the first sentence if multiple
+    const sentences = quote.split(/[.!?]+/).filter(s => s.trim().length > 0);
+    if (sentences.length > 0) {
+      quote = sentences[0].trim();
+      // Add period if it doesn't end with punctuation
+      if (!/[.!?]$/.test(quote)) {
+        quote += '.';
+      }
+    }
+    
+    // Limit to reasonable length (max 100 characters to ensure it's one sentence)
+    if (quote.length > 100) {
+      // Take first sentence or truncate at last complete word before 100 chars
+      const truncated = quote.substring(0, 100);
+      const lastSpace = truncated.lastIndexOf(' ');
+      quote = truncated.substring(0, lastSpace > 0 ? lastSpace : 100).trim() + '.';
+    }
+    
+    console.log('✅ AI: Motivational quote generated', { quote });
+    return quote || "Small steps forward are still progress. You've got this!";
   } catch (error) {
     console.error('Failed to generate motivational quote:', error);
     // Return a simple fallback

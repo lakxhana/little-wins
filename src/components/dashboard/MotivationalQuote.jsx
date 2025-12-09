@@ -3,7 +3,7 @@ import Card from '../common/Card';
 import { theme } from '../../styles/theme';
 import { generateMotivationalQuote } from '../../services/groqService';
 
-const MotivationalQuote = () => {
+const MotivationalQuote = ({ taskFeeling, energyLevel }) => {
   const [currentQuote, setCurrentQuote] = useState("Small steps forward are still progress. You've got this!");
   const [isLoading, setIsLoading] = useState(false);
   const abortControllerRef = useRef(null);
@@ -11,12 +11,12 @@ const MotivationalQuote = () => {
   // Get API key from environment variable
   const apiKey = process.env.REACT_APP_GROQ_API_KEY || '';
 
-  // Load initial quote on mount
+  // Load initial quote on mount and when mood/energy changes
   useEffect(() => {
     if (apiKey) {
       loadQuote();
     }
-  }, []);
+  }, [taskFeeling, energyLevel]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -40,7 +40,7 @@ const MotivationalQuote = () => {
     }
 
     try {
-      const quote = await generateMotivationalQuote(apiKey);
+      const quote = await generateMotivationalQuote(apiKey, taskFeeling, energyLevel);
       setCurrentQuote(quote);
     } catch (error) {
       console.error('Failed to load motivational quote:', error);

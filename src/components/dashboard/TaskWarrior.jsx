@@ -10,11 +10,16 @@ const TaskWarrior = () => {
   const [momentum, setMomentum] = useState(10);
   const [consecutiveCompletions, setConsecutiveCompletions] = useState(0);
   const [recentTaskComplexities, setRecentTaskComplexities] = useState([]);
+  const [currentTaskStartTime, setCurrentTaskStartTime] = useState(null);
+  const [energyDrainedDuringTask, setEnergyDrainedDuringTask] = useState(0);
   
   // Refs to track current values for checking reset condition
   const focusRef = useRef(focus);
   const energyRef = useRef(energy);
   const momentumRef = useRef(momentum);
+  const consecutiveCompletionsRef = useRef(consecutiveCompletions);
+  const lastDrainTimeRef = useRef(null);
+  const energyDrainedRef = useRef(0); // Track actual energy drained during current task
   const XP_PER_LEVEL = 100;
   const FOCUS_MAX = 100;
   const FOCUS_MIN = 0;
@@ -45,16 +50,28 @@ const TaskWarrior = () => {
         const focusValue = parseInt(savedFocus, 10);
         setFocus(focusValue);
         focusRef.current = focusValue;
+      } else {
+        // Default starting values if no saved data
+        setFocus(30);
+        focusRef.current = 30;
       }
       if (savedEnergy !== null) {
         const energyValue = parseInt(savedEnergy, 10);
         setEnergy(energyValue);
         energyRef.current = energyValue;
+      } else {
+        // Default starting values if no saved data
+        setEnergy(50);
+        energyRef.current = 50;
       }
       if (savedMomentum !== null) {
         const momentumValue = parseInt(savedMomentum, 10);
         setMomentum(momentumValue);
         momentumRef.current = momentumValue;
+      } else {
+        // Default starting values if no saved data
+        setMomentum(10);
+        momentumRef.current = 10;
       }
       if (savedConsecutive !== null) {
         setConsecutiveCompletions(parseInt(savedConsecutive, 10));
@@ -79,7 +96,8 @@ const TaskWarrior = () => {
     focusRef.current = focus;
     energyRef.current = energy;
     momentumRef.current = momentum;
-  }, [focus, energy, momentum]);
+    consecutiveCompletionsRef.current = consecutiveCompletions;
+  }, [focus, energy, momentum, consecutiveCompletions]);
 
   // Save XP, level, focus, energy, momentum, and tracking data to localStorage whenever they change
   useEffect(() => {
@@ -96,9 +114,100 @@ const TaskWarrior = () => {
     }
   }, [xp, level, focus, energy, momentum, consecutiveCompletions, recentTaskComplexities]);
 
+  // Listen for task start events to track energy drain
+  useEffect(() => {
+    const handleTaskStarted = (event) => {
+      const taskId = event.detail?.taskId;
+      const startTime = event.detail?.startTime;
+      if (startTime) {
+        console.log('🎯 Task started, energy drain begins:', { taskId, startTime });
+        setCurrentTaskStartTime(startTime);
+        lastDrainTimeRef.current = startTime; // Reset drain tracking
+        energyDrainedRef.current = 0; // Reset energy drained counter for this task
+        setEnergyDrainedDuringTask(0);
+      }
+    };
+
+    window.addEventListener('taskStarted', handleTaskStarted);
+    return () => {
+      window.removeEventListener('taskStarted', handleTaskStarted);
+    };
+  }, []);
+
+  // Stop energy drain when task is completed
+  useEffect(() => {
+    const handleTaskCompleted = () => {
+      console.log('✅ Task completed, energy drain stops. Total energy drained:', energyDrainedRef.current);
+      setCurrentTaskStartTime(null);
+      lastDrainTimeRef.current = null;
+      // Keep energyDrainedRef.current value for use in the completion handler
+    };
+
+    window.addEventListener('taskCompleted', handleTaskCompleted);
+    return () => {
+      window.removeEventListener('taskCompleted', handleTaskCompleted);
+    };
+  }, []);
+
+  // Energy drain system - drain energy while working on tasks
+  // Energy drains naturally as you work, representing the effort expended
+  useEffect(() => {
+    if (!currentTaskStartTime) {
+      // No active task, reset drain tracking
+      lastDrainTimeRef.current = null;
+      console.log('⏸️ No active task, energy drain stopped');
+      return;
+    }
+
+    // Initialize last drain time when task starts
+    if (!lastDrainTimeRef.current) {
+      lastDrainTimeRef.current = currentTaskStartTime;
+      console.log('▶️ Energy drain initialized, starting from:', new Date(currentTaskStartTime).toLocaleTimeString());
+    }
+    
+    // Drain energy: 1 point per minute of active work
+    // This represents the natural energy expenditure of working on tasks
+    const drainInterval = setInterval(() => {
+      const now = Date.now();
+      const lastDrainTime = lastDrainTimeRef.current || currentTaskStartTime;
+      const timeSinceLastDrain = now - lastDrainTime;
+      const minutesSinceLastDrain = timeSinceLastDrain / (60 * 1000);
+      
+      console.log('🔋 Energy drain check:', {
+        minutesSinceLastDrain: minutesSinceLastDrain.toFixed(2),
+        lastDrainTime: new Date(lastDrainTime).toLocaleTimeString(),
+        currentTime: new Date(now).toLocaleTimeString()
+      });
+      
+      // Drain 1 point per minute
+      if (minutesSinceLastDrain >= 1) {
+        const drainAmount = Math.floor(minutesSinceLastDrain); // Drain 1 point per minute
+        if (drainAmount > 0) {
+          setEnergy(prevEnergy => {
+            const newEnergy = Math.max(prevEnergy - drainAmount, ENERGY_MIN);
+            energyRef.current = newEnergy;
+            // Track total energy drained during this task
+            energyDrainedRef.current += drainAmount;
+            setEnergyDrainedDuringTask(energyDrainedRef.current);
+            console.log(`⚡ Energy drained: ${drainAmount} points (was ${prevEnergy}, now ${newEnergy}, total drained this task: ${energyDrainedRef.current})`);
+            return newEnergy;
+          });
+          // Update last drain time to now (minus any remainder)
+          lastDrainTimeRef.current = now - (timeSinceLastDrain % (60 * 1000));
+        }
+      }
+    }, 10000); // Check every 10 seconds for more responsive updates and testing
+
+    return () => {
+      console.log('🛑 Energy drain interval cleared');
+      clearInterval(drainInterval);
+    };
+  }, [currentTaskStartTime]);
+
   // Listen for task completion events
   useEffect(() => {
     const handleTaskCompleted = (event) => {
+      console.log('🎯 Task completed event received:', event.detail);
       const taskComplexity = event.detail?.complexity || 'low';
       const taskStartTime = event.detail?.startTime || null;
       const completionTime = Date.now();
@@ -107,6 +216,14 @@ const TaskWarrior = () => {
       const shouldResetMetrics = focusRef.current === 100 && 
                                   energyRef.current === 100 && 
                                   momentumRef.current === 100;
+      
+      console.log('📊 Current stats before update:', {
+        focus: focusRef.current,
+        energy: energyRef.current,
+        momentum: momentumRef.current,
+        consecutive: consecutiveCompletions,
+        shouldReset: shouldResetMetrics
+      });
       
       // Calculate expected time based on complexity (in milliseconds)
       const getExpectedTime = (complexity) => {
@@ -135,76 +252,138 @@ const TaskWarrior = () => {
           remainingXp -= XP_PER_LEVEL;
         }
         if (levelsGained > 0) {
-          setLevel(prevLevel => prevLevel + levelsGained);
+          setLevel(prevLevel => {
+            const newLevel = prevLevel + levelsGained;
+            // Dispatch level up event for celebration
+            window.dispatchEvent(new CustomEvent('levelUp', {
+              detail: { newLevel, levelsGained }
+            }));
+            return newLevel;
+          });
         }
         return remainingXp;
       });
 
-      // Update consecutive completions and track previous value for Momentum calculation
-      let previousConsecutive = 0;
-      setConsecutiveCompletions(prev => {
-        previousConsecutive = prev;
-        const newConsecutive = prev + 1;
-        
-        // If two tasks completed in a row, increase Focus
-        if (newConsecutive >= 2) {
-          setFocus(prevFocus => {
-            const newFocus = Math.min(prevFocus + 5, FOCUS_MAX);
-            return newFocus;
-          });
-        }
-        
-        // Update Momentum when streak grows
-        if (newConsecutive > previousConsecutive && newConsecutive > 1) {
-          // Streak grew
-          setMomentum(prevMomentum => {
-            const newMomentum = Math.min(prevMomentum + 5, MOMENTUM_MAX);
-            return newMomentum;
-          });
-        }
-        
-        return newConsecutive;
-      });
+      // Calculate new consecutive count first (before state update)
+      const previousConsecutive = consecutiveCompletionsRef.current;
+      const newConsecutive = previousConsecutive + 1;
+      
+      // Update consecutive completions
+      setConsecutiveCompletions(newConsecutive);
+      consecutiveCompletionsRef.current = newConsecutive;
+      console.log('📈 Consecutive completions:', previousConsecutive, '->', newConsecutive);
 
-      // Update Energy
-      // Energy increases when: 1) Task completed early, 2) High complexity task completed
+      // FOCUS: Increases based on consistency and maintaining streaks
+      // - Completing tasks in a row shows focus
+      // - Building longer streaks = better focus
+      if (newConsecutive >= 2) {
+        // Base focus gain for maintaining a streak
+        const focusGain = Math.min(3 + (newConsecutive - 2) * 2, 8); // 3-8 points based on streak length
+        setFocus(prevFocus => {
+          const newFocus = Math.min(prevFocus + focusGain, FOCUS_MAX);
+          focusRef.current = newFocus;
+          console.log(`🎯 Focus updated: ${prevFocus} + ${focusGain} = ${newFocus}`);
+          return newFocus;
+        });
+      }
+
+      // ENERGY: Only increases when completing meaningful tasks
+      // Energy drains while working, and only increases based on task completion rewards
+      // The actual drain that occurred is tracked, not estimated
+      
+      // Get the actual energy drained during this task
+      const actualDrain = energyDrainedRef.current;
+      
+      // Energy gain is based on task complexity and completion quality
+      // Simple tasks give minimal energy, complex tasks give more
+      let energyGain = 0;
+      
+      // Base energy gain based on task complexity (this represents the reward for completing the task)
+      if (taskComplexity === 'high') {
+        energyGain = 5; // High complexity tasks are rewarding to complete
+      } else if (taskComplexity === 'medium') {
+        energyGain = 3; // Medium tasks give moderate reward
+      } else {
+        energyGain = 1; // Low complexity tasks give minimal reward
+      }
+      
+      // Bonus for completing early (efficiency bonus)
       if (completedEarly) {
+        energyGain += 2; // Small bonus for efficiency
+      }
+      
+      // Bonus for maintaining streaks (momentum)
+      if (newConsecutive >= 3) {
+        energyGain += 1; // Small bonus for consistency
+      }
+      
+      // Net energy change: gain minus actual drain
+      // This ensures energy reflects the actual work done
+      const netEnergyChange = energyGain - actualDrain;
+      
+      console.log(`⚡ Energy calculation: gain=${energyGain}, actualDrain=${actualDrain}, netChange=${netEnergyChange}`);
+      
+      if (netEnergyChange !== 0) {
         setEnergy(prevEnergy => {
-          const newEnergy = Math.min(prevEnergy + 8, ENERGY_MAX);
+          const newEnergy = Math.max(ENERGY_MIN, Math.min(prevEnergy + netEnergyChange, ENERGY_MAX));
+          energyRef.current = newEnergy;
+          console.log(`⚡ Energy updated: ${prevEnergy} + ${netEnergyChange} = ${newEnergy}`);
           return newEnergy;
         });
       }
       
-      if (taskComplexity === 'high') {
-        setEnergy(prevEnergy => {
-          const newEnergy = Math.min(prevEnergy + 10, ENERGY_MAX);
-          return newEnergy;
-        });
-      }
+      // Reset energy drained counter for next task
+      energyDrainedRef.current = 0;
+      setEnergyDrainedDuringTask(0);
 
-      // Update Momentum when task completed faster than expected
+      // MOMENTUM: Increases based on speed, streaks, and consistency
+      // - Fast completions show momentum
+      // - Building streaks creates momentum
+      // - Consistent task completion maintains momentum
+      let momentumGain = 0;
+      
+      // Speed bonus
       if (completedFast) {
+        momentumGain += 8; // Big bonus for fast completion
+      } else if (completedEarly) {
+        momentumGain += 4; // Moderate bonus for early completion
+      }
+      
+      // Streak bonus - momentum builds with consecutive completions
+      if (newConsecutive >= 2) {
+        const streakBonus = Math.min(2 + (newConsecutive - 2) * 1.5, 6); // 2-6 points based on streak
+        momentumGain += Math.round(streakBonus);
+      }
+      
+      // Consistency bonus - completing tasks regularly
+      if (newConsecutive >= 3) {
+        momentumGain += 3; // Extra boost for maintaining consistency
+      }
+      
+      if (momentumGain > 0) {
         setMomentum(prevMomentum => {
-          const newMomentum = Math.min(prevMomentum + 7, MOMENTUM_MAX);
+          const newMomentum = Math.min(prevMomentum + momentumGain, MOMENTUM_MAX);
+          momentumRef.current = newMomentum;
+          console.log(`🚀 Momentum updated: ${prevMomentum} + ${momentumGain} = ${newMomentum}`);
           return newMomentum;
         });
       }
 
-      // Track recent task complexities
+      // Track recent task complexities for pattern recognition
       setRecentTaskComplexities(prev => {
         const updated = [...prev, taskComplexity];
-        // Keep only the last N tasks
         const trimmed = updated.slice(-RECENT_TASKS_TO_TRACK);
         
-        // Check if user is sticking to easier tasks consistently
-        // If last 3+ tasks are all "low" complexity, increase Focus
+        // Bonus Focus for showing consistency in task selection
+        // If user completes similar difficulty tasks, they're building good habits
         if (trimmed.length >= 3) {
           const lastThree = trimmed.slice(-3);
-          const allLow = lastThree.every(complexity => complexity === 'low');
+          const allSame = lastThree.every(complexity => complexity === lastThree[0]);
           
-          if (allLow) {
+          if (allSame) {
+            // User is being consistent with task difficulty - good for focus
             setFocus(prevFocus => {
-              const newFocus = Math.min(prevFocus + 3, FOCUS_MAX);
+              const newFocus = Math.min(prevFocus + 2, FOCUS_MAX);
               return newFocus;
             });
           }
@@ -231,10 +410,23 @@ const TaskWarrior = () => {
     };
   }, []);
 
-  // Reset consecutive completions when a task is uncompleted
+  // Reset consecutive completions and adjust stats when a task is uncompleted
   useEffect(() => {
     const handleTaskUncompleted = () => {
+      // Reset streak
       setConsecutiveCompletions(0);
+      
+      // Small decrease in Momentum when breaking a streak (but not too harsh)
+      setMomentum(prevMomentum => {
+        const newMomentum = Math.max(prevMomentum - 5, MOMENTUM_MIN);
+        return newMomentum;
+      });
+      
+      // Small decrease in Focus when breaking focus (but keep it gentle)
+      setFocus(prevFocus => {
+        const newFocus = Math.max(prevFocus - 3, FOCUS_MIN);
+        return newFocus;
+      });
     };
 
     window.addEventListener('taskUncompleted', handleTaskUncompleted);

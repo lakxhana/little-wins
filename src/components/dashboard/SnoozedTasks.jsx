@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Card from '../common/Card';
 import { theme } from '../../styles/theme';
 
-const SnoozedTasks = ({ snoozedTasks, onWakeUp }) => {
+const SnoozedTasks = ({ snoozedTasks, onWakeUp, onDelete }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState({});
 
@@ -194,12 +194,37 @@ const SnoozedTasks = ({ snoozedTasks, onWakeUp }) => {
                 <span>🔴 {timeRemaining[task.id] !== undefined ? formatTime(timeRemaining[task.id]) : 'Calculating...'}</span>
                 <span>🌱 {task.estimatedTime || task.time || '5m'}</span>
               </div>
-              <button 
-                style={wakeUpButtonStyle} 
-                onClick={() => onWakeUp(task.id)}
-              >
-                Wake Up
-              </button>
+              <div style={{ display: 'flex', gap: theme.spacing.sm }}>
+                <button 
+                  style={wakeUpButtonStyle} 
+                  onClick={() => onWakeUp(task.id)}
+                >
+                  Wake Up
+                </button>
+                {onDelete && (
+                  <button 
+                    style={{
+                      ...wakeUpButtonStyle,
+                      backgroundColor: 'transparent',
+                      color: theme.colors.primaryText,
+                      border: `1px solid ${theme.colors.borderGray}`,
+                    }}
+                    onClick={() => onDelete(task.id)}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = '#FEE2E2';
+                      e.currentTarget.style.borderColor = '#EF4444';
+                      e.currentTarget.style.color = '#DC2626';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                      e.currentTarget.style.borderColor = theme.colors.borderGray;
+                      e.currentTarget.style.color = theme.colors.primaryText;
+                    }}
+                  >
+                    Delete
+                  </button>
+                )}
+              </div>
             </div>
           ))}
         </Card>

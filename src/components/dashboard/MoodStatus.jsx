@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import Card from '../common/Card';
 import { theme } from '../../styles/theme';
 import { useWindowSize } from '../../hooks/useWindowSize';
@@ -7,41 +8,115 @@ const MoodStatus = ({ taskFeeling, energyLevel, onUpdateTaskFeeling, onUpdateEne
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState('right');
   const [activeDropdown, setActiveDropdown] = useState(null); // 'feeling' or 'energy'
-  const dropdownRef = useRef(null);
-  const buttonRef = useRef(null);
+  const [dropdownStyle, setDropdownStyle] = useState(null);
+  const feelingButtonRef = useRef(null);
+  const energyButtonRef = useRef(null);
   const { width } = useWindowSize();
 
-  // Calculate dropdown position based on available space
+  // Calculate dropdown position when it opens
   useEffect(() => {
-    if (isDropdownOpen && buttonRef.current) {
+    if (!activeDropdown) {
+      setDropdownStyle(null);
+      return;
+    }
+
+    const calculatePosition = () => {
+      const buttonRef = activeDropdown === 'feeling' ? feelingButtonRef : energyButtonRef;
+      
+      if (!buttonRef.current) {
+        // Retry after a short delay
+        setTimeout(calculatePosition, 50);
+        return;
+      }
+
       const rect = buttonRef.current.getBoundingClientRect();
-      const dropdownWidth = 300; // minWidth from styles
+      const dropdownWidth = width <= 768 ? 280 : 320;
       const spaceOnRight = window.innerWidth - rect.right;
       const spaceOnLeft = rect.left;
 
       // Position on left if not enough space on right
-      if (spaceOnRight < dropdownWidth && spaceOnLeft > dropdownWidth) {
-        setDropdownPosition('left');
-      } else {
-        setDropdownPosition('right');
-      }
-    }
-  }, [isDropdownOpen]);
+      const position = spaceOnRight < dropdownWidth && spaceOnLeft > dropdownWidth ? 'left' : 'right';
+      setDropdownPosition(position);
 
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsDropdownOpen(false);
-        setActiveDropdown(null);
+      const baseStyle = {
+        position: 'fixed',
+        background: theme.colors.white,
+        borderRadius: theme.borderRadius.lg,
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
+        padding: width <= 480 ? theme.spacing.md : theme.spacing.lg,
+        zIndex: 5000,
+        maxHeight: '500px',
+        overflowY: 'auto',
+        border: `1px solid #E5E7EB`,
+      };
+
+      const dropdownTop = rect.bottom + theme.spacing.sm;
+      const minWidth = width <= 768 ? '280px' : '320px';
+
+      if (width <= 480) {
+        // Mobile: full width
+        setDropdownStyle({
+          ...baseStyle,
+          top: `${dropdownTop}px`,
+          left: `${Math.max(0, rect.left)}px`,
+          right: `${Math.max(0, window.innerWidth - rect.right)}px`,
+          width: 'auto',
+          minWidth: 'auto',
+        });
+      } else {
+        // Desktop/Tablet: positioned relative to button
+        if (position === 'left') {
+          setDropdownStyle({
+            ...baseStyle,
+            top: `${dropdownTop}px`,
+            right: `${window.innerWidth - rect.right}px`,
+            left: 'auto',
+            minWidth: minWidth,
+          });
+        } else {
+          setDropdownStyle({
+            ...baseStyle,
+            top: `${dropdownTop}px`,
+            left: `${rect.left}px`,
+            right: 'auto',
+            minWidth: minWidth,
+          });
+        }
       }
     };
 
-    if (activeDropdown) {
+    // Small delay to ensure refs are set
+    const timer = setTimeout(calculatePosition, 10);
+    return () => clearTimeout(timer);
+  }, [activeDropdown, width]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    if (!activeDropdown) return;
+
+    const handleClickOutside = (event) => {
+      const feelingButton = feelingButtonRef.current;
+      const energyButton = energyButtonRef.current;
+      const dropdown = document.querySelector('[data-dropdown]');
+      
+      // Check if click is outside both buttons and dropdown
+      const clickedFeelingButton = feelingButton && feelingButton.contains(event.target);
+      const clickedEnergyButton = energyButton && energyButton.contains(event.target);
+      const clickedDropdown = dropdown && dropdown.contains(event.target);
+
+      if (!clickedFeelingButton && !clickedEnergyButton && !clickedDropdown) {
+        setActiveDropdown(null);
+        setIsDropdownOpen(false);
+      }
+    };
+
+    // Add listener after a small delay to avoid immediate closing
+    const timer = setTimeout(() => {
       document.addEventListener('mousedown', handleClickOutside);
-    }
+    }, 100);
 
     return () => {
+      clearTimeout(timer);
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [activeDropdown]);
@@ -68,14 +143,18 @@ const MoodStatus = ({ taskFeeling, energyLevel, onUpdateTaskFeeling, onUpdateEne
     high: '🚀 High Energy',
   };
 
-  const handleFeelingClick = () => {
-    setActiveDropdown(activeDropdown === 'feeling' ? null : 'feeling');
-    setIsDropdownOpen(activeDropdown !== 'feeling');
+  const handleFeelingClick = (e) => {
+    e.stopPropagation();
+    const newActive = activeDropdown === 'feeling' ? null : 'feeling';
+    setActiveDropdown(newActive);
+    setIsDropdownOpen(newActive !== null);
   };
 
-  const handleEnergyClick = () => {
-    setActiveDropdown(activeDropdown === 'energy' ? null : 'energy');
-    setIsDropdownOpen(activeDropdown !== 'energy');
+  const handleEnergyClick = (e) => {
+    e.stopPropagation();
+    const newActive = activeDropdown === 'energy' ? null : 'energy';
+    setActiveDropdown(newActive);
+    setIsDropdownOpen(newActive !== null);
   };
 
   const handleUpdateFeeling = (value) => {
@@ -134,53 +213,7 @@ const MoodStatus = ({ taskFeeling, energyLevel, onUpdateTaskFeeling, onUpdateEne
   };
 
 
-  const dropdownContainerStyle = {
-    position: 'relative',
-  };
 
-  const getDropdownStyle = () => {
-    const baseStyle = {
-      position: 'absolute',
-      top: '100%',
-      marginTop: theme.spacing.sm,
-      background: theme.colors.white,
-      borderRadius: theme.borderRadius.lg,
-      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
-      padding: width <= 480 ? theme.spacing.md : theme.spacing.lg,
-      zIndex: 1000,
-      maxHeight: '500px',
-      overflowY: 'auto',
-      border: `1px solid #E5E7EB`,
-    };
-
-    // Mobile responsive
-    if (width <= 480) {
-      return {
-        ...baseStyle,
-        left: 0,
-        right: 0,
-        minWidth: 'auto',
-        width: '100%',
-      };
-    }
-
-    // Tablet and desktop
-    const minWidth = width <= 768 ? '280px' : '320px';
-    
-    if (dropdownPosition === 'left') {
-      return {
-        ...baseStyle,
-        right: 0,
-        minWidth: minWidth,
-      };
-    } else {
-      return {
-        ...baseStyle,
-        left: 0,
-        minWidth: minWidth,
-      };
-    }
-  };
 
   const sectionTitleStyle = {
     fontSize: '15px',
@@ -235,13 +268,11 @@ const MoodStatus = ({ taskFeeling, energyLevel, onUpdateTaskFeeling, onUpdateEne
   };
 
   return (
-    <Card>
+    <Card style={{ overflow: 'visible', position: 'relative' }}>
       <div style={containerStyle}>
-        <div 
-          style={dropdownContainerStyle} 
-          ref={activeDropdown === 'feeling' ? dropdownRef : null}
-        >
+        <div style={{ position: 'relative' }}>
           <div
+            ref={feelingButtonRef}
             style={statusCardStyle}
             onClick={handleFeelingClick}
             onMouseEnter={(e) => {
@@ -260,8 +291,23 @@ const MoodStatus = ({ taskFeeling, energyLevel, onUpdateTaskFeeling, onUpdateEne
         </div>
           </div>
 
-          {activeDropdown === 'feeling' && (
-            <div style={getDropdownStyle()}>
+          {activeDropdown === 'feeling' && typeof document !== 'undefined' && createPortal(
+            <div 
+              data-dropdown 
+              style={dropdownStyle || {
+                position: 'fixed',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                background: theme.colors.white,
+                borderRadius: theme.borderRadius.lg,
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
+                padding: theme.spacing.lg,
+                zIndex: 5000,
+                minWidth: '300px',
+                border: `1px solid #E5E7EB`,
+              }}
+            >
               <div style={firstSectionTitleStyle}>Update Task Feeling</div>
               {feelingOptions.map((option) => {
                 const isSelected = taskFeeling === option.value;
@@ -293,15 +339,14 @@ const MoodStatus = ({ taskFeeling, energyLevel, onUpdateTaskFeeling, onUpdateEne
                   </div>
                 );
               })}
-            </div>
+            </div>,
+            document.body
           )}
         </div>
 
-        <div 
-          style={dropdownContainerStyle} 
-          ref={activeDropdown === 'energy' ? dropdownRef : null}
-        >
+        <div style={{ position: 'relative' }}>
           <div
+            ref={energyButtonRef}
             style={statusCardStyle}
             onClick={handleEnergyClick}
             onMouseEnter={(e) => {
@@ -320,8 +365,23 @@ const MoodStatus = ({ taskFeeling, energyLevel, onUpdateTaskFeeling, onUpdateEne
             </div>
           </div>
 
-          {activeDropdown === 'energy' && (
-            <div style={getDropdownStyle()}>
+          {activeDropdown === 'energy' && typeof document !== 'undefined' && createPortal(
+            <div 
+              data-dropdown 
+              style={dropdownStyle || {
+                position: 'fixed',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                background: theme.colors.white,
+                borderRadius: theme.borderRadius.lg,
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
+                padding: theme.spacing.lg,
+                zIndex: 5000,
+                minWidth: '300px',
+                border: `1px solid #E5E7EB`,
+              }}
+            >
               <div style={firstSectionTitleStyle}>Update Energy Level</div>
               {energyOptions.map((option) => {
                 const isSelected = energyLevel === option.value;
@@ -353,7 +413,8 @@ const MoodStatus = ({ taskFeeling, energyLevel, onUpdateTaskFeeling, onUpdateEne
                   </div>
                 );
               })}
-            </div>
+            </div>,
+            document.body
           )}
         </div>
       </div>

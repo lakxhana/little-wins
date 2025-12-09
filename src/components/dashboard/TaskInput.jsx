@@ -4,8 +4,9 @@ import Card from '../common/Card';
 import { theme } from '../../styles/theme';
 import { analyzeTaskWithGroq, breakDownTaskWithGroq } from '../../services/groqService';
 import { useWindowSize } from '../../hooks/useWindowSize';
+import { detectConcerningContent, getSupportResources } from '../../utils/safetyCheck';
 
-const TaskInput = ({ onAddTask, energyLevel }) => {
+const TaskInput = ({ onAddTask, energyLevel, taskFeeling }) => {
   const [taskText, setTaskText] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisData, setAnalysisData] = useState(null);
@@ -14,6 +15,7 @@ const TaskInput = ({ onAddTask, energyLevel }) => {
   const [breakdownSteps, setBreakdownSteps] = useState([]);
   const [isBreakingDown, setIsBreakingDown] = useState(false);
   const [showBreakdown, setShowBreakdown] = useState(false);
+  const [showSafetyMessage, setShowSafetyMessage] = useState(false);
   const analysisTimeoutRef = useRef(null);
   const abortControllerRef = useRef(null);
   const { width } = useWindowSize();
@@ -39,7 +41,21 @@ const TaskInput = ({ onAddTask, energyLevel }) => {
     if (!text.trim()) {
       setAnalysisData(null);
       setAdhdTips([]);
+      setShowSafetyMessage(false);
       return;
+    }
+
+    // Safety check: Detect concerning content before processing
+    if (detectConcerningContent(text)) {
+      setShowSafetyMessage(true);
+      setAnalysisData(null);
+      setAdhdTips([]);
+      setBreakdownSteps([]);
+      setShowBreakdown(false);
+      // Don't proceed with AI analysis for concerning content
+      return;
+    } else {
+      setShowSafetyMessage(false);
     }
 
     // Cancel previous analysis if still running
@@ -61,8 +77,8 @@ const TaskInput = ({ onAddTask, energyLevel }) => {
     abortControllerRef.current = controller;
 
     try {
-      console.log('🤖 AI: Analyzing task with Groq AI...', { task: text, energyLevel });
-      const analysis = await analyzeTaskWithGroq(text, energyLevel, apiKey);
+      console.log('🤖 AI: Analyzing task with Groq AI...', { task: text, energyLevel, taskFeeling });
+      const analysis = await analyzeTaskWithGroq(text, energyLevel, taskFeeling, apiKey);
       console.log('✅ AI: Analysis complete', analysis);
       
       // Only update if not aborted
@@ -128,7 +144,7 @@ const TaskInput = ({ onAddTask, energyLevel }) => {
         abortControllerRef.current = null;
       }
     };
-  }, [taskText, energyLevel]);
+  }, [taskText, energyLevel, taskFeeling]);
 
   const breakDownTask = async (text) => {
     if (!apiKey) {
@@ -139,8 +155,8 @@ const TaskInput = ({ onAddTask, energyLevel }) => {
     setIsBreakingDown(true);
     setShowBreakdown(true); // Show loading state immediately
     try {
-      console.log('🤖 AI: Breaking down task with Groq AI...', { task: text, energyLevel });
-      const steps = await breakDownTaskWithGroq(text, energyLevel, apiKey);
+      console.log('🤖 AI: Breaking down task with Groq AI...', { task: text, energyLevel, taskFeeling });
+      const steps = await breakDownTaskWithGroq(text, energyLevel, taskFeeling, apiKey);
       console.log('✅ AI: Breakdown complete', { stepCount: steps?.length, steps });
       if (steps && steps.length > 0) {
         setBreakdownSteps(steps);
@@ -195,6 +211,17 @@ const TaskInput = ({ onAddTask, energyLevel }) => {
     const trimmed = taskText.trim();
     if (!trimmed) return;
 
+    // Block submission if safety message is showing
+    if (showSafetyMessage) {
+      return;
+    }
+
+    // Check for concerning content before submitting
+    if (detectConcerningContent(trimmed)) {
+      setShowSafetyMessage(true);
+      return;
+    }
+
     setIsAnalyzing(true);
     try {
       // Use the XP reward from analysis if available, otherwise it will default in Dashboard
@@ -205,6 +232,7 @@ const TaskInput = ({ onAddTask, energyLevel }) => {
       setAdhdTips([]);
       setBreakdownSteps([]);
       setShowBreakdown(false);
+      setShowSafetyMessage(false);
     } finally {
       setIsAnalyzing(false);
     }
@@ -382,6 +410,54 @@ const TaskInput = ({ onAddTask, energyLevel }) => {
     border: `1px solid #FCD34D`,
   };
 
+  const safetyMessageStyle = {
+    backgroundColor: '#FEF2F2',
+    border: '2px solid #FCA5A5',
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.lg,
+    marginTop: theme.spacing.md,
+    marginBottom: theme.spacing.md,
+  };
+
+  const safetyTitleStyle = {
+    fontSize: '18px',
+    fontWeight: '600',
+    color: '#DC2626',
+    marginBottom: theme.spacing.md,
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+  };
+
+  const safetyTextStyle = {
+    fontSize: '16px',
+    color: theme.colors.primaryText,
+    lineHeight: '1.6',
+    marginBottom: theme.spacing.md,
+  };
+
+  const resourcesStyle = {
+    marginTop: theme.spacing.md,
+    padding: theme.spacing.md,
+    backgroundColor: '#F9FAFB',
+    borderRadius: theme.borderRadius.sm,
+    border: `1px solid #E5E7EB`,
+  };
+
+  const resourceItemStyle = {
+    marginBottom: theme.spacing.sm,
+    fontSize: '14px',
+    color: theme.colors.primaryText,
+  };
+
+  const resourceLinkStyle = {
+    color: theme.colors.primaryBlue,
+    textDecoration: 'underline',
+    fontWeight: '500',
+  };
+
+  const supportResources = getSupportResources();
+
   return (
     <>
       <style>{animationStyle}</style>
@@ -406,8 +482,73 @@ const TaskInput = ({ onAddTask, energyLevel }) => {
           </Button>
         </div>
       </form>
+
+      {/* Safety Message for Concerning Content */}
+      {showSafetyMessage && taskText.trim() && (
+        <Card style={safetyMessageStyle}>
+          <div style={safetyTitleStyle}>
+            <span>💙</span>
+            <span>Are you doing okay?</span>
+          </div>
+          <div style={safetyTextStyle}>
+            I noticed something concerning in what you wrote. Your wellbeing matters, and you don't have to go through difficult times alone.
+          </div>
+          <div style={safetyTextStyle}>
+            <strong>Please reach out for support:</strong>
+          </div>
+          <div style={resourcesStyle}>
+            <div style={resourceItemStyle}>
+              <strong>{supportResources.befrienders.name}:</strong>{' '}
+              <a href={`tel:${supportResources.befrienders.number.replace(/\s/g, '')}`} style={resourceLinkStyle}>
+                {supportResources.befrienders.number}
+              </a>
+              {' '}({supportResources.befrienders.available}){' '}
+              <a href={supportResources.befrienders.website} target="_blank" rel="noopener noreferrer" style={resourceLinkStyle}>
+                {supportResources.befrienders.website}
+              </a>
+            </div>
+            <div style={{ ...resourceItemStyle, fontSize: '12px', opacity: 0.8, marginTop: theme.spacing.xs }}>
+              {supportResources.befrienders.description}
+            </div>
+            <div style={{ ...resourceItemStyle, marginTop: theme.spacing.sm }}>
+              <strong>Email:</strong>{' '}
+              <a href={`mailto:${supportResources.befrienders.email}`} style={resourceLinkStyle}>
+                {supportResources.befrienders.email}
+              </a>
+            </div>
+            {supportResources.befriendersKuching && (
+              <div style={{ ...resourceItemStyle, marginTop: theme.spacing.sm, paddingTop: theme.spacing.sm, borderTop: `1px solid #E5E7EB` }}>
+                <strong>{supportResources.befriendersKuching.name}:</strong>{' '}
+                <a href={`tel:${supportResources.befriendersKuching.number.replace(/\s/g, '')}`} style={resourceLinkStyle}>
+                  {supportResources.befriendersKuching.number}
+                </a>
+                {' '}({supportResources.befriendersKuching.available}){' '}
+                <a href={supportResources.befriendersKuching.website} target="_blank" rel="noopener noreferrer" style={resourceLinkStyle}>
+                  {supportResources.befriendersKuching.website}
+                </a>
+              </div>
+            )}
+          </div>
+          <div style={{ ...safetyTextStyle, marginTop: theme.spacing.md, fontStyle: 'italic' }}>
+            {supportResources.message}
+          </div>
+          <Button
+            onClick={() => {
+              setShowSafetyMessage(false);
+              setTaskText('');
+            }}
+            variant="primary"
+            style={{
+              marginTop: theme.spacing.md,
+              padding: `${theme.spacing.sm} ${theme.spacing.md}`,
+            }}
+          >
+            I understand, thank you
+          </Button>
+        </Card>
+      )}
       
-      {taskText.trim() && (analysisData || isAnalyzingTask) && (
+      {taskText.trim() && !showSafetyMessage && (analysisData || isAnalyzingTask) && (
         <>
           <Card style={dropdownCardStyle}>
             <div style={dropdownHeaderStyle}>

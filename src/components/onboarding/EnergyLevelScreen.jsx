@@ -30,6 +30,8 @@ const EnergyLevelScreen = ({ onSelect }) => {
     minHeight: '100vh',
     width: '100%',
     boxSizing: 'border-box',
+    position: 'relative',
+    zIndex: 1,
   };
 
   const appTitleStyle = {
@@ -38,6 +40,8 @@ const EnergyLevelScreen = ({ onSelect }) => {
     marginBottom: theme.spacing.xl,
     fontWeight: '600',
     textAlign: 'center',
+    animation: 'scaleIn 0.6s ease-out',
+    textShadow: `0 2px 10px rgba(91, 143, 163, 0.2)`,
   };
 
   const titleStyle = {
@@ -88,28 +92,41 @@ const EnergyLevelScreen = ({ onSelect }) => {
 
   const getCardStyle = (level) => ({
     cursor: 'pointer',
-    transition: theme.transitions.normal,
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
     padding: theme.spacing.lg,
     textAlign: 'center',
-    background: hoveredCard === level ? theme.colors.lightBlue : theme.colors.white,
-    transform: hoveredCard === level ? 'translateY(-4px)' : 'translateY(0)',
+    background: hoveredCard === level 
+      ? `linear-gradient(135deg, rgba(123, 168, 184, 0.15) 0%, rgba(91, 143, 163, 0.25) 100%)`
+      : theme.colors.white,
+    transform: hoveredCard === level ? 'translateY(-4px) scale(1.01)' : 'translateY(0)',
+    boxShadow: hoveredCard === level 
+      ? `0 8px 24px rgba(123, 168, 184, 0.15)`
+      : theme.shadows.md,
+    border: `2px solid ${hoveredCard === level ? 'rgba(123, 168, 184, 0.4)' : theme.colors.borderGray}`,
+    animation: 'slideInUp 0.5s ease-out',
+    animationDelay: level === 'low' ? '0.1s' : level === 'moderate' ? '0.2s' : '0.3s',
+    animationFillMode: 'both',
   });
 
-  const optionTitleStyle = {
+  const getOptionTitleStyle = (level) => ({
     fontSize: '18px',
     fontWeight: '600',
-    color: theme.colors.primaryBlue,
+    color: hoveredCard === level ? theme.colors.primaryBlue : theme.colors.primaryBlue,
     marginBottom: theme.spacing.xs,
-  };
+    transition: 'color 0.3s ease',
+    opacity: hoveredCard === level ? 1 : 0.9,
+  });
 
-  const optionDescStyle = {
+  const getOptionDescStyle = (level) => ({
     fontSize: '14px',
-    color: theme.colors.primaryText,
-    opacity: 0.7,
-  };
+    color: hoveredCard === level ? theme.colors.primaryText : theme.colors.primaryText,
+    opacity: hoveredCard === level ? 0.85 : 0.7,
+    transition: 'all 0.3s ease',
+  });
 
   return (
     <div style={containerStyle}>
+      <div className="wave-overlay" />
       <div style={contentStyle}>
         <h1 style={appTitleStyle}>Little Wins</h1>
         <h2 style={titleStyle}>How's your energy today?</h2>
@@ -124,11 +141,11 @@ const EnergyLevelScreen = ({ onSelect }) => {
               onMouseEnter={() => setHoveredCard(option.level)}
               onMouseLeave={() => setHoveredCard(null)}
             >
-              <div style={{ fontSize: '32px', marginBottom: theme.spacing.sm }}>
+              <div style={{ fontSize: '32px', marginBottom: theme.spacing.sm, animation: 'float 3s ease-in-out infinite', animationDelay: option.level === 'low' ? '0s' : option.level === 'moderate' ? '0.5s' : '1s' }}>
                 {option.emoji}
               </div>
-              <div style={optionTitleStyle}>{option.label}</div>
-              <div style={optionDescStyle}>{option.description}</div>
+              <div style={getOptionTitleStyle(option.level)}>{option.label}</div>
+              <div style={getOptionDescStyle(option.level)}>{option.description}</div>
             </Card>
           ))}
         </div>

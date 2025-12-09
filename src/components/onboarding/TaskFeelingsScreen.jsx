@@ -30,6 +30,8 @@ const TaskFeelingsScreen = ({ onSelect }) => {
     minHeight: '100vh',
     width: '100%',
     boxSizing: 'border-box',
+    position: 'relative',
+    zIndex: 1,
   };
 
   const appTitleStyle = {
@@ -38,6 +40,8 @@ const TaskFeelingsScreen = ({ onSelect }) => {
     marginBottom: theme.spacing.xl,
     fontWeight: '600',
     textAlign: 'center',
+    animation: 'scaleIn 0.6s ease-out',
+    textShadow: `0 2px 10px rgba(91, 143, 163, 0.2)`,
   };
 
   const titleStyle = {
@@ -67,28 +71,41 @@ const TaskFeelingsScreen = ({ onSelect }) => {
 
   const getOptionCardStyle = (feeling) => ({
     cursor: 'pointer',
-    transition: theme.transitions.normal,
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
     padding: theme.spacing.xl,
     textAlign: 'center',
-    background: hoveredCard === feeling ? theme.colors.lightBlue : theme.colors.white,
-    transform: hoveredCard === feeling ? 'translateY(-4px)' : 'translateY(0)',
+    background: hoveredCard === feeling 
+      ? `linear-gradient(135deg, rgba(123, 168, 184, 0.15) 0%, rgba(91, 143, 163, 0.25) 100%)`
+      : theme.colors.white,
+    transform: hoveredCard === feeling ? 'translateY(-4px) scale(1.01)' : 'translateY(0)',
+    boxShadow: hoveredCard === feeling 
+      ? `0 8px 24px rgba(123, 168, 184, 0.15)`
+      : theme.shadows.md,
+    border: `2px solid ${hoveredCard === feeling ? 'rgba(123, 168, 184, 0.4)' : theme.colors.borderGray}`,
+    animation: 'slideInUp 0.5s ease-out',
+    animationDelay: feeling === 'overwhelmed' ? '0.1s' : '0.2s',
+    animationFillMode: 'both',
   });
 
-  const optionTitleStyle = {
+  const getOptionTitleStyle = (feeling) => ({
     fontSize: '20px',
     fontWeight: '600',
-    color: theme.colors.primaryBlue,
+    color: hoveredCard === feeling ? theme.colors.primaryBlue : theme.colors.primaryBlue,
     marginBottom: theme.spacing.sm,
-  };
+    transition: 'color 0.3s ease',
+    opacity: hoveredCard === feeling ? 1 : 0.9,
+  });
 
-  const optionDescStyle = {
+  const getOptionDescStyle = (feeling) => ({
     fontSize: '16px',
-    color: theme.colors.primaryText,
-    opacity: 0.7,
-  };
+    color: hoveredCard === feeling ? theme.colors.primaryText : theme.colors.primaryText,
+    opacity: hoveredCard === feeling ? 0.85 : 0.7,
+    transition: 'all 0.3s ease',
+  });
 
   return (
     <div style={containerStyle}>
+      <div className="wave-overlay" />
       <div style={contentStyle}>
         <h1 style={appTitleStyle}>Little Wins</h1>
         <h2 style={titleStyle}>Welcome! How are you feeling about your tasks today?</h2>
@@ -101,8 +118,8 @@ const TaskFeelingsScreen = ({ onSelect }) => {
             onMouseEnter={() => setHoveredCard('overwhelmed')}
             onMouseLeave={() => setHoveredCard(null)}
           >
-            <div style={optionTitleStyle}>😰 I'm getting overwhelmed</div>
-            <div style={optionDescStyle}>
+            <div style={getOptionTitleStyle('overwhelmed')}>😰 I'm getting overwhelmed</div>
+            <div style={getOptionDescStyle('overwhelmed')}>
               I need help managing the load and breaking things down
             </div>
           </Card>
@@ -113,8 +130,8 @@ const TaskFeelingsScreen = ({ onSelect }) => {
             onMouseEnter={() => setHoveredCard('structure')}
             onMouseLeave={() => setHoveredCard(null)}
           >
-            <div style={optionTitleStyle}>📋 I just need help with structure</div>
-            <div style={optionDescStyle}>
+            <div style={getOptionTitleStyle('structure')}>📋 I just need help with structure</div>
+            <div style={getOptionDescStyle('structure')}>
               I'm ready to tackle tasks, just need organization
             </div>
           </Card>

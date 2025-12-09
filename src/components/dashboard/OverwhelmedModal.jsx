@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { theme } from '../../styles/theme';
 
 const OverwhelmedModal = ({ isOpen, onClose, onSnooze, onTryAnyway }) => {
@@ -29,8 +30,6 @@ const OverwhelmedModal = ({ isOpen, onClose, onSnooze, onTryAnyway }) => {
     return () => clearInterval(interval);
   }, [isOpen]);
 
-  if (!isOpen) return null;
-
   const overlayStyle = {
     position: 'fixed',
     top: 0,
@@ -41,8 +40,10 @@ const OverwhelmedModal = ({ isOpen, onClose, onSnooze, onTryAnyway }) => {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 1000,
+    zIndex: 10000,
     padding: theme.spacing.lg,
+    backdropFilter: 'blur(4px)',
+    WebkitBackdropFilter: 'blur(4px)',
   };
 
   const modalStyle = {
@@ -54,7 +55,9 @@ const OverwhelmedModal = ({ isOpen, onClose, onSnooze, onTryAnyway }) => {
     maxHeight: '90vh',
     overflowY: 'auto',
     position: 'relative',
-    boxShadow: theme.shadows.lg,
+    boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+    zIndex: 10001,
+    animation: 'scaleIn 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
   };
 
   const closeButtonStyle = {
@@ -208,7 +211,7 @@ const OverwhelmedModal = ({ isOpen, onClose, onSnooze, onTryAnyway }) => {
     }
   };
 
-  return (
+  const modalContent = (
     <div style={overlayStyle} onClick={onClose}>
       <div style={modalStyle} onClick={(e) => e.stopPropagation()}>
         <button style={closeButtonStyle} onClick={onClose}>
@@ -284,6 +287,11 @@ const OverwhelmedModal = ({ isOpen, onClose, onSnooze, onTryAnyway }) => {
       </div>
     </div>
   );
+
+  // Render modal using portal to ensure it's always on top
+  return isOpen && typeof document !== 'undefined'
+    ? createPortal(modalContent, document.body)
+    : null;
 };
 
 export default OverwhelmedModal;

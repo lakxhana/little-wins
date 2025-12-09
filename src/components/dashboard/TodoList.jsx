@@ -54,7 +54,7 @@ const TodoList = ({ tasks, onToggleTask, onAddTask, onDeleteTask, onReorderTasks
   if (hasNoTasks) return null;
 
   return (
-    <div>
+    <div style={{ position: 'relative', zIndex: 1 }}>
       {/* SECTION: SHOW CURRENT TASK */}
       {!allTasksCompleted && currentTask && (
         <Card>

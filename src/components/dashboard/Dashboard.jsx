@@ -8,6 +8,7 @@ import FocusTools from './FocusTools';
 import TaskInput from './TaskInput';
 import SnoozedTasks from './SnoozedTasks';
 import Card from '../common/Card';
+import Celebration from '../common/Celebration';
 import { theme } from '../../styles/theme';
 import { useWindowSize } from '../../hooks/useWindowSize';
 
@@ -15,7 +16,20 @@ const Dashboard = ({ taskFeeling, energyLevel, onUpdateTaskFeeling, onUpdateEner
   const [tasks, setTasks] = useState([]);
   const [hasLoaded, setHasLoaded] = useState(false);
   const [taskStartTimes, setTaskStartTimes] = useState(new Map());
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [celebrationType, setCelebrationType] = useState('task');
   const { width } = useWindowSize();
+
+  // Listen for level up events
+  useEffect(() => {
+    const handleLevelUp = () => {
+      setCelebrationType('level');
+      setShowCelebration(true);
+    };
+
+    window.addEventListener('levelUp', handleLevelUp);
+    return () => window.removeEventListener('levelUp', handleLevelUp);
+  }, []);
 
   // Load tasks from localStorage on mount
   useEffect(() => {
@@ -83,8 +97,17 @@ const Dashboard = ({ taskFeeling, energyLevel, onUpdateTaskFeeling, onUpdateEner
       
       // Add start time for current task if it doesn't have one
       if (currentTask && !newMap.has(currentTask.id)) {
-        newMap.set(currentTask.id, Date.now());
+        const startTime = Date.now();
+        newMap.set(currentTask.id, startTime);
         hasChanges = true;
+        
+        // Dispatch task started event for energy drain
+        window.dispatchEvent(new CustomEvent('taskStarted', {
+          detail: { 
+            taskId: currentTask.id,
+            startTime: startTime
+          }
+        }));
       }
       
       // Clean up start times for completed tasks
@@ -155,6 +178,10 @@ const Dashboard = ({ taskFeeling, energyLevel, onUpdateTaskFeeling, onUpdateEner
                 startTime: startTime
               }
             }));
+            
+            // Show celebration
+            setCelebrationType('task');
+            setShowCelebration(true);
             
             // Remove start time since task is completed
             setTaskStartTimes(prev => {
@@ -280,9 +307,15 @@ const Dashboard = ({ taskFeeling, energyLevel, onUpdateTaskFeeling, onUpdateEner
 
   return (
     <div style={containerStyle}>
+      <div className="wave-overlay" />
+      <Celebration 
+        show={showCelebration} 
+        type={celebrationType}
+        onComplete={() => setShowCelebration(false)} 
+      />
       <Header pageTitle="Dashboard" />
       <div style={contentStyle}>
-        <MotivationalQuote />
+        <MotivationalQuote taskFeeling={taskFeeling} energyLevel={energyLevel} />
         <TaskWarrior />
         <MoodStatus
           taskFeeling={taskFeeling}
@@ -293,6 +326,7 @@ const Dashboard = ({ taskFeeling, energyLevel, onUpdateTaskFeeling, onUpdateEner
         <SnoozedTasks
           snoozedTasks={snoozedTasks}
           onWakeUp={handleWakeUpTask}
+          onDelete={handleDeleteTask}
         />
         <TodoList
           tasks={activeTasks}
@@ -309,7 +343,7 @@ const Dashboard = ({ taskFeeling, energyLevel, onUpdateTaskFeeling, onUpdateEner
               <span>➕</span>
               <span>Add New Task</span>
             </div>
-            <TaskInput onAddTask={handleAddTask} energyLevel={energyLevel} />
+            <TaskInput onAddTask={handleAddTask} energyLevel={energyLevel} taskFeeling={taskFeeling} />
           </Card>
         )}
         <FocusTools />
