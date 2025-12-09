@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Card from '../common/Card';
 import { theme } from '../../styles/theme';
+import { useWindowSize } from '../../hooks/useWindowSize';
 
 const MoodStatus = ({ taskFeeling, energyLevel, onUpdateTaskFeeling, onUpdateEnergyLevel }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -8,6 +9,7 @@ const MoodStatus = ({ taskFeeling, energyLevel, onUpdateTaskFeeling, onUpdateEne
   const [activeDropdown, setActiveDropdown] = useState(null); // 'feeling' or 'energy'
   const dropdownRef = useRef(null);
   const buttonRef = useRef(null);
+  const { width } = useWindowSize();
 
   // Calculate dropdown position based on available space
   useEffect(() => {
@@ -90,7 +92,7 @@ const MoodStatus = ({ taskFeeling, energyLevel, onUpdateTaskFeeling, onUpdateEne
 
   const containerStyle = {
     display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
+    gridTemplateColumns: width <= 480 ? '1fr' : '1fr 1fr',
     gap: theme.spacing.md,
   };
 
@@ -144,23 +146,38 @@ const MoodStatus = ({ taskFeeling, energyLevel, onUpdateTaskFeeling, onUpdateEne
       background: theme.colors.white,
       borderRadius: theme.borderRadius.lg,
       boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
-      padding: theme.spacing.lg,
+      padding: width <= 480 ? theme.spacing.md : theme.spacing.lg,
       zIndex: 1000,
-      minWidth: '320px',
       maxHeight: '500px',
       overflowY: 'auto',
       border: `1px solid #E5E7EB`,
     };
 
+    // Mobile responsive
+    if (width <= 480) {
+      return {
+        ...baseStyle,
+        left: 0,
+        right: 0,
+        minWidth: 'auto',
+        width: '100%',
+      };
+    }
+
+    // Tablet and desktop
+    const minWidth = width <= 768 ? '280px' : '320px';
+    
     if (dropdownPosition === 'left') {
       return {
         ...baseStyle,
         right: 0,
+        minWidth: minWidth,
       };
     } else {
       return {
         ...baseStyle,
         left: 0,
+        minWidth: minWidth,
       };
     }
   };
@@ -237,10 +254,10 @@ const MoodStatus = ({ taskFeeling, energyLevel, onUpdateTaskFeeling, onUpdateEne
               e.currentTarget.style.boxShadow = 'none';
             }}
           >
-            <div style={labelStyle}>Today I need help with</div>
+          <div style={labelStyle}>Today I need help with</div>
             <div style={valueStyle}>
               {feelingLabels[taskFeeling] || 'Not set'}
-            </div>
+        </div>
           </div>
 
           {activeDropdown === 'feeling' && (
@@ -251,10 +268,10 @@ const MoodStatus = ({ taskFeeling, energyLevel, onUpdateTaskFeeling, onUpdateEne
                 const emoji = option.label.split(' ')[0];
                 const label = option.label.split(' ').slice(1).join(' ');
                 return (
-                  <div
-                    key={option.value}
+                <div
+                  key={option.value}
                     style={optionStyle(isSelected)}
-                    onClick={() => handleUpdateFeeling(option.value)}
+                  onClick={() => handleUpdateFeeling(option.value)}
                     onMouseEnter={(e) => {
                       if (!isSelected) {
                         e.currentTarget.style.background = '#F9FAFB';
@@ -271,8 +288,8 @@ const MoodStatus = ({ taskFeeling, energyLevel, onUpdateTaskFeeling, onUpdateEne
                     <span style={optionEmojiStyle}>{emoji}</span>
                     <div style={optionContentStyle}>
                       <div style={optionLabelStyle}>{label}</div>
-                      <div style={optionDescStyle}>{option.desc}</div>
-                    </div>
+                  <div style={optionDescStyle}>{option.desc}</div>
+                </div>
                   </div>
                 );
               })}
@@ -311,10 +328,10 @@ const MoodStatus = ({ taskFeeling, energyLevel, onUpdateTaskFeeling, onUpdateEne
                 const emoji = option.label.split(' ')[0];
                 const label = option.label.split(' ').slice(1).join(' ');
                 return (
-                  <div
-                    key={option.value}
+                <div
+                  key={option.value}
                     style={optionStyle(isSelected)}
-                    onClick={() => handleUpdateEnergy(option.value)}
+                  onClick={() => handleUpdateEnergy(option.value)}
                     onMouseEnter={(e) => {
                       if (!isSelected) {
                         e.currentTarget.style.background = '#F9FAFB';
@@ -331,8 +348,8 @@ const MoodStatus = ({ taskFeeling, energyLevel, onUpdateTaskFeeling, onUpdateEne
                     <span style={optionEmojiStyle}>{emoji}</span>
                     <div style={optionContentStyle}>
                       <div style={optionLabelStyle}>{label}</div>
-                      <div style={optionDescStyle}>{option.desc}</div>
-                    </div>
+                  <div style={optionDescStyle}>{option.desc}</div>
+                </div>
                   </div>
                 );
               })}

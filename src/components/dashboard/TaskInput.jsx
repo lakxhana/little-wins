@@ -3,6 +3,7 @@ import Button from '../common/Button';
 import Card from '../common/Card';
 import { theme } from '../../styles/theme';
 import { analyzeTaskWithGroq, breakDownTaskWithGroq } from '../../services/groqService';
+import { useWindowSize } from '../../hooks/useWindowSize';
 
 const TaskInput = ({ onAddTask, energyLevel }) => {
   const [taskText, setTaskText] = useState('');
@@ -15,10 +16,11 @@ const TaskInput = ({ onAddTask, energyLevel }) => {
   const [showBreakdown, setShowBreakdown] = useState(false);
   const analysisTimeoutRef = useRef(null);
   const abortControllerRef = useRef(null);
-
+  const { width } = useWindowSize();
+    
   // Get API key from environment variable
   const apiKey = process.env.REACT_APP_GROQ_API_KEY || '';
-
+    
   // Helper function to parse time string to minutes
   const parseTimeToMinutes = (timeStr) => {
     if (!timeStr) return 0;
@@ -72,12 +74,12 @@ const TaskInput = ({ onAddTask, energyLevel }) => {
         // Override difficulty if time indicates hard task
         const finalDifficulty = isHardTask ? 'Hard' : analysis.difficulty;
         const finalXpReward = isHardTask ? 30 : analysis.xpReward;
-        
-        setAnalysisData({
+
+    setAnalysisData({
           difficulty: finalDifficulty,
           time: analysis.time,
           xpReward: finalXpReward,
-        });
+    });
         setAdhdTips(analysis.adhdTips);
         
         // If task is Hard (by difficulty or time), automatically break it down
@@ -217,6 +219,7 @@ const TaskInput = ({ onAddTask, energyLevel }) => {
 
   const inputContainerStyle = {
     display: 'flex',
+    flexDirection: width <= 480 ? 'column' : 'row',
     gap: theme.spacing.sm,
   };
 
@@ -414,24 +417,24 @@ const TaskInput = ({ onAddTask, energyLevel }) => {
             </div>
             {analysisData ? (
               <>
-                <div style={analysisRowStyle}>
-                  <span style={analysisLabelStyle}>Difficulty:</span>
-                  <span style={analysisValueStyle}>
-                    {analysisData.difficulty} 🌱
-                  </span>
-                </div>
-                <div style={analysisRowStyle}>
-                  <span style={analysisLabelStyle}>Time:</span>
-                  <span style={analysisValueStyle}>
-                    {analysisData.time} 🕐
-                  </span>
-                </div>
-                <div style={analysisRowStyle}>
-                  <span style={analysisLabelStyle}>XP Reward:</span>
-                  <span style={analysisValueStyle}>
-                    +{analysisData.xpReward} ⚡
-                  </span>
-                </div>
+            <div style={analysisRowStyle}>
+              <span style={analysisLabelStyle}>Difficulty:</span>
+              <span style={analysisValueStyle}>
+                {analysisData.difficulty} 🌱
+              </span>
+            </div>
+            <div style={analysisRowStyle}>
+              <span style={analysisLabelStyle}>Time:</span>
+              <span style={analysisValueStyle}>
+                {analysisData.time} 🕐
+              </span>
+            </div>
+            <div style={analysisRowStyle}>
+              <span style={analysisLabelStyle}>XP Reward:</span>
+              <span style={analysisValueStyle}>
+                +{analysisData.xpReward} ⚡
+              </span>
+            </div>
               </>
             ) : (
               <div style={{ padding: theme.spacing.sm, textAlign: 'center', opacity: 0.7 }}>
@@ -536,7 +539,7 @@ const TaskInput = ({ onAddTask, energyLevel }) => {
               ) : null}
             </Card>
           )}
-
+          
           {adhdTips.length > 0 && (
             <Card style={tipsCardStyle}>
               <div style={dropdownHeaderStyle}>

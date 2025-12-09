@@ -9,11 +9,13 @@ import TaskInput from './TaskInput';
 import SnoozedTasks from './SnoozedTasks';
 import Card from '../common/Card';
 import { theme } from '../../styles/theme';
+import { useWindowSize } from '../../hooks/useWindowSize';
 
 const Dashboard = ({ taskFeeling, energyLevel, onUpdateTaskFeeling, onUpdateEnergyLevel }) => {
   const [tasks, setTasks] = useState([]);
   const [hasLoaded, setHasLoaded] = useState(false);
   const [taskStartTimes, setTaskStartTimes] = useState(new Map());
+  const { width } = useWindowSize();
 
   // Load tasks from localStorage on mount
   useEffect(() => {
@@ -120,10 +122,10 @@ const Dashboard = ({ taskFeeling, energyLevel, onUpdateTaskFeeling, onUpdateEner
       return {
         id: `${baseId}-${index}-${Math.random().toString(36).substr(2, 9)}`, // Ensure unique IDs with order preserved
         text: text,
-        completed: false,
+      completed: false,
         complexity: complexity,
         xpReward: taskXpReward,
-      };
+    };
     });
     
     // Use functional update to ensure we're working with the latest state
@@ -271,7 +273,9 @@ const Dashboard = ({ taskFeeling, energyLevel, onUpdateTaskFeeling, onUpdateEner
   const contentStyle = {
     maxWidth: '800px',
     margin: '0 auto',
-    padding: theme.spacing.lg,
+    padding: width <= 480 ? theme.spacing.md : theme.spacing.lg,
+    width: '100%',
+    boxSizing: 'border-box',
   };
 
   return (

@@ -91,4 +91,9 @@ export const theme = {
     normal: '250ms ease-in-out',
     slow: '350ms ease-in-out',
   },
+  breakpoints: {
+    mobile: '480px',
+    tablet: '768px',
+    desktop: '1024px',
+  },
 };

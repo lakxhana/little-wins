@@ -156,3 +156,44 @@ button {
 input, textarea {
   font-family: 'Roboto', sans-serif;
 }
+
+/* Responsive Design - Mobile First Approach */
+/* Mobile devices (up to 480px) */
+@media (max-width: 480px) {
+  body {
+    font-size: 14px;
+  }
+
+  h1 {
+    font-size: 24px;
+  }
+
+  h2 {
+    font-size: 20px;
+  }
+
+  h3 {
+    font-size: 16px;
+  }
+}
+
+/* Tablet devices (481px to 768px) */
+@media (min-width: 481px) and (max-width: 768px) {
+  body {
+    font-size: 15px;
+  }
+
+  h1 {
+    font-size: 26px;
+  }
+
+  h2 {
+    font-size: 21px;
+  }
+
+  h3 {
+    font-size: 17px;
+  }
+}
+
+/* Desktop devices (769px and above) - default styles apply */

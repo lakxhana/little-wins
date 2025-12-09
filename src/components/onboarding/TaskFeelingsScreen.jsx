@@ -2,9 +2,11 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import Card from '../common/Card';
 import { theme } from '../../styles/theme';
+import { useWindowSize } from '../../hooks/useWindowSize';
 
 const TaskFeelingsScreen = ({ onSelect }) => {
   const navigate = useNavigate();
+  const { width } = useWindowSize();
 
   const handleSelect = (feeling) => {
     onSelect(feeling);
@@ -20,12 +22,14 @@ const TaskFeelingsScreen = ({ onSelect }) => {
   const contentStyle = {
     maxWidth: '800px',
     margin: '0 auto',
-    padding: theme.spacing.lg,
+    padding: width <= 480 ? theme.spacing.md : theme.spacing.lg,
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: '100vh',
+    width: '100%',
+    boxSizing: 'border-box',
   };
 
   const appTitleStyle = {

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Card from '../common/Card';
 import Button from '../common/Button';
 import { theme } from '../../styles/theme';
+import { useWindowSize } from '../../hooks/useWindowSize';
 
 const FocusTools = () => {
   const [timerMinutes, setTimerMinutes] = useState(25);
@@ -10,6 +11,7 @@ const FocusTools = () => {
   const [timerMode, setTimerMode] = useState('work'); // 'work' or 'break'
   const [brainDumpItems, setBrainDumpItems] = useState([]);
   const [newItemText, setNewItemText] = useState('');
+  const { width } = useWindowSize();
 
   useEffect(() => {
     let interval = null;
@@ -108,7 +110,7 @@ const FocusTools = () => {
   };
 
   const timerDisplayStyle = {
-    fontSize: '48px',
+    fontSize: width <= 480 ? '36px' : '48px',
     fontWeight: '700',
     color: theme.colors.primaryBlue,
     textAlign: 'center',
@@ -118,6 +120,7 @@ const FocusTools = () => {
 
   const timerButtonsStyle = {
     display: 'flex',
+    flexDirection: width <= 480 ? 'column' : 'row',
     gap: theme.spacing.sm,
     justifyContent: 'center',
     marginBottom: theme.spacing.xl,
@@ -206,7 +209,7 @@ const FocusTools = () => {
 
       {/* Brain Dump */}
       <div>
-        <div style={sectionTitleStyle}>💭 Brain Dump</div>
+          <div style={sectionTitleStyle}>💭 Brain Dump</div>
         <form onSubmit={handleAddItem} style={formStyle}>
           <input
             type="text"
@@ -247,9 +250,9 @@ const FocusTools = () => {
                 }}
               >
                 <span style={itemTextStyle}>{item.text}</span>
-                <Button
+            <Button
                   onClick={() => handleCompleteItem(item.id)}
-                  variant="outline"
+              variant="outline"
                   style={{ 
                     padding: `${theme.spacing.sm} ${theme.spacing.md}`, 
                     fontSize: '13px',
@@ -257,9 +260,9 @@ const FocusTools = () => {
                     minWidth: '80px',
                     whiteSpace: 'nowrap',
                   }}
-                >
+            >
                   ✓ Done
-                </Button>
+            </Button>
               </li>
             ))}
           </ul>
